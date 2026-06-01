@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronRight, Flag, AlertCircle, Calendar, ListTree } from 'lucide-react'
+import { ChevronRight, Flag, AlertCircle, Calendar, ListTree, GripVertical } from 'lucide-react'
 import type { Task } from '../../types'
 import TaskContextMenu from './TaskContextMenu'
 import { buildTaskMenuItems } from './taskMenuBuilder'
@@ -29,6 +29,7 @@ interface Props {
   onPin?: (id: string, isPinned: boolean) => void
   onSetDate?: (id: string, date: string | null) => void
   onSetPriority?: (id: string, priority: import('../../types').Priority) => void
+  dragHandleProps?: Record<string, unknown>
 }
 
 export default function TaskItem({
@@ -47,6 +48,7 @@ export default function TaskItem({
   onPin,
   onSetDate,
   onSetPriority,
+  dragHandleProps,
 }: Props) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
@@ -102,6 +104,19 @@ export default function TaskItem({
         onClick={() => onSelect(task)}
         onContextMenu={handleContextMenu}
       >
+        {/* Drag handle — visible on hover when dragging is enabled */}
+        {dragHandleProps && (
+          <button
+            type="button"
+            className="h-4 w-4 flex items-center justify-center text-text-muted/30 hover:text-text-muted shrink-0 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag to reorder"
+            {...(dragHandleProps as Record<string, unknown>)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+        )}
+
         <button
           type="button"
           className={cn(

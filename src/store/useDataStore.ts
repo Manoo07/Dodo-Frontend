@@ -88,6 +88,7 @@ interface DataState {
   permanentDeleteTask: (id: string) => void
   emptyTrash: () => void
   duplicateTask: (id: string) => Task | undefined
+  reorderTask: (id: string, newOrder: number, parentId?: string | null, sectionId?: string | null) => void
   toggleSection: (id: string) => void
   createTag: (name: string, color?: string) => Tag
   deleteTag: (id: string) => void
@@ -419,6 +420,25 @@ export const useDataStore = create<DataState>()((set, get) => ({
       .catch((err) => set({ error: apiErrorMessage(err) }))
 
     return original
+  },
+
+  reorderTask: (id, newOrder, parentId, sectionId) => {
+    // Optimistic update
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              order: newOrder,
+              ...(parentId !== undefined && { parentId }),
+              ...(sectionId !== undefined && { sectionId }),
+            }
+          : t,
+      ),
+    }))
+    void tasksApi
+      .reorder(id, newOrder, parentId)
+      .catch(() => get().hydrate()) // revert on failure
   },
 
   toggleSection: (id) => {

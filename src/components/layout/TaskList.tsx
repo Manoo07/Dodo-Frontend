@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical } from 'lucide-react'
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import SortableItem from '../ui/SortableItem'
 import { useAppStore } from '../../store/useAppStore'
 import { useDataStore } from '../../store/useDataStore'
 import TaskItem from '../task/TaskItem'
@@ -77,12 +89,20 @@ export default function TaskList() {
   const duplicateTask = useDataStore((s) => s.duplicateTask)
   const markWontDo = useDataStore((s) => s.markWontDo)
   const toggleSection = useDataStore((s) => s.toggleSection)
+  const reorderTask = useDataStore((s) => s.reorderTask)
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['__unsectioned']))
   const [showViewMenu, setShowViewMenu] = useState(false)
   const [showAddSection, setShowAddSection] = useState(false)
   const [addingSubtaskFor, setAddingSubtaskFor] = useState<string | null>(null)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+
+  // Require 8px movement before drag starts so clicks still work
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } }),
+  )
 
   const isListView = selectedView === 'list' && selectedListId && !selectedTagId
   const isTrashView = selectedView === 'trash' && !selectedTagId
@@ -152,6 +172,36 @@ export default function TaskList() {
     updateTask(id, { isPinned: !isPinned })
   }
 
+  function handleDragStart(e: DragStartEvent) {
+    setActiveDragId(String(e.active.id))
+  }
+
+  function handleDragEnd(e: DragEndEvent, groupTasks: Task[]) {
+    setActiveDragId(null)
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+
+    const ids = groupTasks.map((t) => t.id)
+    const oldIdx = ids.indexOf(String(active.id))
+    const newIdx = ids.indexOf(String(over.id))
+    if (oldIdx === -1 || newIdx === -1) return
+
+    // Compute a float order between surrounding tasks
+    const sorted = [...groupTasks].sort((a, b) => a.order - b.order)
+    let newOrder: number
+    if (newIdx === 0) {
+      newOrder = sorted[0].order - 1
+    } else if (newIdx >= sorted.length - 1) {
+      newOrder = sorted[sorted.length - 1].order + 1
+    } else {
+      const before = sorted[newIdx < oldIdx ? newIdx - 1 : newIdx].order
+      const after  = sorted[newIdx < oldIdx ? newIdx   : newIdx + 1].order
+      newOrder = (before + after) / 2
+    }
+
+    reorderTask(String(active.id), newOrder)
+  }
+
   function handleAddTask(
     title: string,
     listId: string,
@@ -177,8 +227,8 @@ export default function TaskList() {
   const title = getViewTitle(selectedView, listInfo?.name, tagInfo?.name)
   const taskGroups = isListView ? groupTasksBySection(tasks, sections) : null
 
-  function renderTaskRows(groupTasks: Task[], baseDepth = 0) {
-    return flattenTree(groupTasks, baseDepth, expandedIds).map(({ task, depth }) => (
+  function renderTaskItem(task: Task, depth: number, dragHandleProps?: Record<string, unknown>) {
+    return (
       <div key={task.id}>
         <TaskItem
           task={task}
@@ -203,6 +253,7 @@ export default function TaskList() {
           onPin={isTrashView || isCompletedView ? undefined : handlePin}
           onSetDate={isTrashView || isCompletedView ? undefined : (id, date) => updateTask(id, { dueDate: date })}
           onSetPriority={isTrashView || isCompletedView ? undefined : (id, priority) => updateTask(id, { priority })}
+          dragHandleProps={dragHandleProps}
         />
         {addingSubtaskFor === task.id && isListView && (
           <div style={{ paddingLeft: `${10 + (depth + 1) * 20}px` }}>
@@ -218,7 +269,67 @@ export default function TaskList() {
           </div>
         )}
       </div>
-    ))
+    )
+  }
+
+  /** Render a flat list of root tasks wrapped in DnD sortable context */
+  function renderSortableGroup(groupTasks: Task[]) {
+    const rootTasks = groupTasks  // already root-level for each group
+    const ids = rootTasks.map((t) => t.id)
+    return (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={(e) => handleDragEnd(e, rootTasks)}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          {rootTasks.map((task) => (
+            <SortableItem key={task.id} id={task.id} disabled={isTrashView || isCompletedView}>
+              {(handleProps) => (
+                <>
+                  {renderTaskItem(task, 0, handleProps)}
+                  {task.children && expandedIds.has(task.id) &&
+                    flattenTree(task.children, 1, expandedIds).map(({ task: child, depth }) =>
+                      renderTaskItem(child, depth)
+                    )
+                  }
+                </>
+              )}
+            </SortableItem>
+          ))}
+        </SortableContext>
+        <DragOverlay>
+          {activeDragId ? (() => {
+            const t = tasksFlat.find((x) => x.id === activeDragId)
+            if (!t) return null
+            return (
+              <div
+                className="flex items-center gap-2 px-3 rounded-lg text-sm font-medium text-text-primary"
+                style={{
+                  height: 36,
+                  background: '#1e1e22',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                  opacity: 0.95,
+                  cursor: 'grabbing',
+                }}
+              >
+                <GripVertical className="h-3.5 w-3.5 text-text-muted shrink-0" strokeWidth={2} />
+                <span className="flex-1 truncate">{t.title}</span>
+              </div>
+            )
+          })() : null}
+        </DragOverlay>
+      </DndContext>
+    )
+  }
+
+  /** Non-DnD flat render (for non-list views) */
+  function renderTaskRows(groupTasks: Task[], baseDepth = 0) {
+    return flattenTree(groupTasks, baseDepth, expandedIds).map(({ task, depth }) =>
+      renderTaskItem(task, depth)
+    )
   }
 
   return (
@@ -357,7 +468,7 @@ export default function TaskList() {
                     {group.tasks.length === 0 ? (
                       <p className="px-4 py-2 text-xs text-text-muted">No tasks in this section</p>
                     ) : (
-                      renderTaskRows(group.tasks)
+                      renderSortableGroup(group.tasks)
                     )}
                   </div>
                 )}
@@ -365,7 +476,7 @@ export default function TaskList() {
             )
           })
         ) : (
-          renderTaskRows(tasks)
+          isListView ? renderSortableGroup(tasks) : renderTaskRows(tasks)
         )}
       </div>
     </div>
