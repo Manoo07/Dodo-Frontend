@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from './store/useAuthStore'
+import { useDataStore } from './store/useDataStore'
 import AppLayout from './components/layout/AppLayout'
 import AuthPage from './pages/AuthPage'
 
@@ -8,15 +9,16 @@ import AuthPage from './pages/AuthPage'
 function LoadingScreen({ complete }: { complete: boolean }) {
   const [barWidth, setBarWidth] = useState(4)
 
-  // Simulate realistic async progress — stalls near 85% waiting for real completion
+  // Simulate realistic async progress — stalls near 85% waiting for completion
   useEffect(() => {
     const steps: [number, number][] = [
       [80,   20],
-      [250,  45],
-      [600,  65],
-      [1000, 78],
-      [1600, 84],
-      [2400, 87],
+      [250,  42],
+      [600,  60],
+      [1000, 72],
+      [1600, 80],
+      [2400, 85],
+      [3500, 88],
     ]
     const timers = steps.map(([delay, w]) =>
       setTimeout(() => setBarWidth((prev) => (prev < w ? w : prev)), delay),
@@ -24,7 +26,7 @@ function LoadingScreen({ complete }: { complete: boolean }) {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  // When actual loading finishes → jump to 100 %
+  // When actual loading finishes → fill to 100%
   useEffect(() => {
     if (complete) setBarWidth(100)
   }, [complete])
@@ -35,8 +37,6 @@ function LoadingScreen({ complete }: { complete: boolean }) {
         <h1 className="text-[28px] font-black tracking-[-0.04em] text-text-primary leading-none mb-4">
           Do<span className="text-accent">do</span>
         </h1>
-
-        {/* Progress bar */}
         <div
           className="mx-auto rounded-full overflow-hidden"
           style={{ width: 100, height: 3, background: 'rgba(255,255,255,0.07)' }}
@@ -46,9 +46,7 @@ function LoadingScreen({ complete }: { complete: boolean }) {
             style={{
               width: `${barWidth}%`,
               background: 'var(--color-accent)',
-              transition: complete
-                ? 'width 0.25s ease-out'   // snap quickly to 100%
-                : 'width 0.55s ease-out',  // slow creep during load
+              transition: complete ? 'width 0.25s ease-out' : 'width 0.55s ease-out',
             }}
           />
         </div>
@@ -60,32 +58,42 @@ function LoadingScreen({ complete }: { complete: boolean }) {
 // ── App root ──────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const { token, user, loading, checkAuth } = useAuthStore()
+  const { token, user, loading: authLoading, checkAuth } = useAuthStore()
+  const { hydrate, loading: dataLoading, hydrated } = useDataStore()
 
-  // Whether the auth check has finished (or was never needed)
+  // Whether all async initialization is done
   const [initDone, setInitDone] = useState(false)
-  // Whether we've waited for the completion animation to finish
+  // Whether we've held the screen long enough to show the completed bar
   const [showContent, setShowContent] = useState(false)
 
+  // Step 1 — verify auth token
   useEffect(() => {
     if (token && !user) {
       checkAuth()
     } else {
-      // No token — no async work needed, mark done immediately
-      setInitDone(true)
+      // No token — nothing async needed
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  // Mark done as soon as checkAuth finishes
+  // Step 2 — once user is verified, load app data
   useEffect(() => {
-    if (!loading && (user !== null || !token)) {
+    if (user && !hydrated && !dataLoading) {
+      void hydrate()
+    }
+  }, [user, hydrated, dataLoading, hydrate])
+
+  // Step 3 — mark init done when everything is loaded OR when no login needed
+  useEffect(() => {
+    const authDone = !authLoading
+    const dataDone = !dataLoading && (hydrated || !user)
+
+    if (authDone && dataDone) {
       setInitDone(true)
     }
-  }, [loading, user, token])
+  }, [authLoading, dataLoading, hydrated, user])
 
-  // After initDone, hold the loading screen for 350ms so the bar visibly
-  // completes to 100% before the content transitions in
+  // Step 4 — wait 350ms after initDone so bar visibly reaches 100%
   useEffect(() => {
     if (!initDone) return
     const t = setTimeout(() => setShowContent(true), 350)

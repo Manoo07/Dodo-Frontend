@@ -19,7 +19,6 @@ export default function AppLayout() {
   const setSidebarWidth = useLayoutStore((s) => s.setSidebarWidth)
   const setTaskListWidth = useLayoutStore((s) => s.setTaskListWidth)
   const clampToViewport = useLayoutStore((s) => s.clampToViewport)
-  const loading = useDataStore((s) => s.loading)
   const hydrated = useDataStore((s) => s.hydrated)
   const error = useDataStore((s) => s.error)
   const hydrate = useDataStore((s) => s.hydrate)
@@ -59,21 +58,6 @@ export default function AppLayout() {
     },
     [setTaskListWidth],
   )
-
-  if (loading && !hydrated) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-bg-primary">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="text-2xl font-black tracking-tight text-text-primary">
-            Do<span className="text-accent">do</span>
-          </div>
-          <div className="h-0.5 w-20 mx-auto rounded-full bg-bg-surface overflow-hidden">
-            <div className="h-full w-1/2 bg-accent rounded-full animate-pulse" />
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   if (error && !hydrated) {
     return (

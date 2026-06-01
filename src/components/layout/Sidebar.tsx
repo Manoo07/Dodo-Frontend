@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Folder,
   LogOut,
+  X,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useDataStore } from '../../store/useDataStore'
@@ -61,26 +62,74 @@ function ListButton({
   count,
   active,
   onClick,
+  onDelete,
 }: {
   list: List
   count: number
   active: boolean
   onClick: () => void
+  onDelete: () => void
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (confirmDelete) {
+      onDelete()
+    } else {
+      setConfirmDelete(true)
+      // Auto-reset after 3s if not confirmed
+      setTimeout(() => setConfirmDelete(false), 3000)
+    }
+  }
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn('nav-item', active ? 'nav-item-active' : 'nav-item-default')}
-    >
-      {list.icon ? (
-        <span className="shrink-0 text-sm leading-none">{list.icon}</span>
-      ) : (
-        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: list.color }} />
+    <div
+      className={cn(
+        'group nav-item relative',
+        active ? 'nav-item-active' : 'nav-item-default',
       )}
-      <span className="flex-1 truncate">{list.name}</span>
-      {count > 0 && <span className="nav-count-badge">{count}</span>}
-    </button>
+      style={{ paddingRight: 6 }}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex items-center gap-2 flex-1 min-w-0"
+        style={{ height: '100%' }}
+      >
+        {list.icon ? (
+          <span className="shrink-0 text-sm leading-none">{list.icon}</span>
+        ) : (
+          <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: list.color }} />
+        )}
+        <span className="flex-1 truncate text-left">{list.name}</span>
+      </button>
+
+      {/* Task count — hidden when delete button shows */}
+      {count > 0 && !confirmDelete && (
+        <span className="nav-count-badge shrink-0 group-hover:hidden">{count}</span>
+      )}
+
+      {/* Delete button — appears on hover */}
+      <button
+        type="button"
+        onClick={handleDelete}
+        title={confirmDelete ? 'Click again to confirm delete' : 'Delete list'}
+        className={cn(
+          'shrink-0 flex items-center justify-center rounded-md transition-all',
+          confirmDelete
+            ? 'opacity-100 text-priority-p1 bg-priority-p1/10'
+            : 'opacity-0 group-hover:opacity-100 text-text-muted hover:text-priority-p1 hover:bg-priority-p1/10',
+        )}
+        style={{ width: 22, height: 22 }}
+      >
+        {confirmDelete ? (
+          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+        ) : (
+          <X className="h-3.5 w-3.5" strokeWidth={2} />
+        )}
+      </button>
+    </div>
   )
 }
 
@@ -90,12 +139,14 @@ function FolderGroup({
   getCount,
   selectedListId,
   onListClick,
+  onDeleteList,
 }: {
   folder: FolderType
   lists: List[]
   getCount: (listId: string) => number
   selectedListId: string | null
   onListClick: (id: string) => void
+  onDeleteList: (id: string) => void
 }) {
   const [expanded, setExpanded] = useState(true)
   const folderLists = lists.filter((l) => l.folderId === folder.id)
@@ -125,6 +176,7 @@ function FolderGroup({
               count={getCount(list.id)}
               active={selectedListId === list.id}
               onClick={() => onListClick(list.id)}
+              onDelete={() => onDeleteList(list.id)}
             />
           ))}
         </div>
@@ -149,6 +201,7 @@ export default function Sidebar() {
   const tags = useDataStore((s) => s.tags)
   const tasks = useDataStore((s) => s.tasks)
   const getListTaskCount = useDataStore((s) => s.getListTaskCount)
+  const deleteList = useDataStore((s) => s.deleteList)
 
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
@@ -239,6 +292,7 @@ export default function Sidebar() {
                     count={getListTaskCount(list.id)}
                     active={selectedView === 'list' && selectedListId === list.id}
                     onClick={() => handleListClick(list.id)}
+                    onDelete={() => deleteList(list.id)}
                   />
                 ))}
                 {folders.map((folder) => (
@@ -249,6 +303,7 @@ export default function Sidebar() {
                     getCount={getListTaskCount}
                     selectedListId={selectedListId}
                     onListClick={handleListClick}
+                    onDeleteList={(id) => deleteList(id)}
                   />
                 ))}
               </div>
