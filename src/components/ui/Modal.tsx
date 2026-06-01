@@ -45,7 +45,7 @@ export default function Modal({
     >
       {/* Backdrop — div not button so it never intercepts inner button clicks */}
       <div
-        className="absolute inset-0 bg-black/30"
+        className="absolute inset-0 bg-black/50"
         aria-hidden="true"
         onClick={onClose}
       />
