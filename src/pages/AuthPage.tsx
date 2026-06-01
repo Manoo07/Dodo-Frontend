@@ -452,7 +452,7 @@ function VerifyPendingForm() {
 export default function AuthPage() {
   const { authPage, setAuthPage } = useAuthStore()
   const [resetToken, setResetToken] = useState<string | null>(null)
-  const [verifyBanner, setVerifyBanner] = useState('')
+  const [verifyBanner] = useState('')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

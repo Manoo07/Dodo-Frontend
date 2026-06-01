@@ -54,7 +54,7 @@ export default function MarkdownEditor({
         TaskList,
         ExtendedTaskItem.configure({ nested: true }),
         CodeBlockLowlight.configure({ lowlight }),
-        TableKit.configure({ resizable: false }),
+        TableKit,
         Placeholder.configure({ placeholder }),
         Markdown.configure({
           html: false,
