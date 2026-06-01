@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "git add . && git diff --cached --quiet || git commit -m 'deploy: update frontend' && git push origin main"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
