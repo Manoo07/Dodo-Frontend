@@ -12,7 +12,6 @@ import { TableKit } from '@tiptap/extension-table'
 import { Markdown } from 'tiptap-markdown'
 import { common, createLowlight } from 'lowlight'
 import { cn } from '../../lib/cn'
-import MarkdownHintBar from './MarkdownHintBar'
 import { DeferredBulletList, ExtendedTaskItem } from './markdownEditorExtensions'
 
 const lowlight = createLowlight(common)
@@ -34,8 +33,8 @@ export default function MarkdownEditor({
   className,
   placeholder = 'Write something, or type / for blocks…',
 }: MarkdownEditorProps) {
-  const [isFocused, setIsFocused] = useState(false)
-  const [isEmpty, setIsEmpty] = useState(!value.trim())
+  const [, setIsFocused] = useState(false)
+  const [, setIsEmpty] = useState(!value.trim())
 
   const editor = useEditor(
     {
@@ -96,7 +95,6 @@ export default function MarkdownEditor({
       )}
       onClick={() => editor?.commands.focus()}
     >
-      {isEmpty && !isFocused && <MarkdownHintBar />}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <EditorContent editor={editor} />
       </div>

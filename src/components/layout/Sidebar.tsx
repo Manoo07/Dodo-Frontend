@@ -153,6 +153,7 @@ export default function Sidebar() {
   const logout = useAuthStore((s) => s.logout)
 
   const [showAddList, setShowAddList] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
 
   const tagTaskCounts = useMemo(() => {
     const map: Record<string, number> = {}
@@ -313,25 +314,57 @@ export default function Sidebar() {
 
           {/* User row */}
           {user && (
-            <div className="flex items-center gap-2.5 mt-2 px-2.5 py-1.5 rounded-lg">
-              <div
-                className="h-6 w-6 rounded-full bg-accent flex items-center justify-center text-[11px] font-700 text-white shrink-0 select-none"
-                aria-hidden="true"
-              >
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="flex-1 truncate text-[13px] font-medium text-text-secondary">
-                {user.name}
-              </span>
-              <button
-                type="button"
-                onClick={logout}
-                title="Sign out"
-                className="icon-btn shrink-0"
-                aria-label="Sign out"
-              >
-                <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
-              </button>
+            <div className="mt-2 px-1">
+              {confirmLogout ? (
+                /* Confirmation state */
+                <div
+                  className="rounded-xl px-3 py-2.5 space-y-2.5"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <p className="text-[12px] text-text-secondary text-center leading-snug">
+                    Sign out of <span className="font-semibold text-text-primary">{user.name}</span>?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmLogout(false)}
+                      className="flex-1 h-7 rounded-lg text-[12px] font-medium text-text-secondary transition-colors"
+                      style={{ background: 'rgba(255,255,255,0.06)' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className="flex-1 h-7 rounded-lg text-[12px] font-semibold text-white transition-colors"
+                      style={{ background: 'var(--color-priority-p1)' }}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Normal user row */
+                <div className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg group">
+                  <div
+                    className="h-6 w-6 rounded-full bg-accent flex items-center justify-center text-[11px] font-bold text-white shrink-0 select-none"
+                  >
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="flex-1 truncate text-[13px] font-medium text-text-secondary">
+                    {user.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmLogout(true)}
+                    title="Sign out"
+                    className="icon-btn shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
