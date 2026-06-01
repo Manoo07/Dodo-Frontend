@@ -9,6 +9,7 @@ import {
   AlignJustify,
   Plus,
   ClipboardList,
+  Trash2,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useDataStore } from '../../store/useDataStore'
@@ -60,11 +61,14 @@ export default function TaskDetail() {
   const [description, setDescription] = useState('')
   const [addingSubtask, setAddingSubtask] = useState(false)
   const [subtaskTitle, setSubtaskTitle] = useState('')
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null)
+  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState('')
   const [footerMenu, setFooterMenu] = useState<{ x: number; y: number } | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const titleRef = useRef<HTMLTextAreaElement>(null)
   const saveDescriptionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const subtaskRef = useRef<HTMLInputElement>(null)
+  const editingSubtaskRef = useRef<HTMLInputElement>(null)
   const splitRef = useRef<HTMLDivElement>(null)
 
   const detailNotesHeight = useLayoutStore((s) => s.detailNotesHeight)
@@ -115,6 +119,29 @@ export default function TaskDetail() {
   useEffect(() => {
     if (addingSubtask) subtaskRef.current?.focus()
   }, [addingSubtask])
+
+  // Re-focus editing input when tab becomes visible again (cursor persistence)
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (!document.hidden && editingSubtaskId) {
+        editingSubtaskRef.current?.focus()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [editingSubtaskId])
+
+  function startEditSubtask(id: string, title: string) {
+    setEditingSubtaskId(id)
+    setEditingSubtaskTitle(title)
+    setAddingSubtask(false)
+  }
+
+  function saveSubtaskEdit(id: string) {
+    const trimmed = editingSubtaskTitle.trim()
+    if (trimmed) updateTask(id, { title: trimmed })
+    setEditingSubtaskId(null)
+  }
 
   function saveTitle() {
     if (!task || title.trim() === task.title) return
@@ -362,26 +389,72 @@ export default function TaskDetail() {
             <h3 className="subtask-section-header">Subtasks</h3>
             {(task.children && task.children.length > 0) || addingSubtask ? (
               <>
-                <ul className="space-y-0">
+                <ul className="space-y-0.5">
                   {task.children?.map((child) => (
-                  <li key={child.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTaskId(child.id)}
-                      className="subtask-row"
-                    >
-                      <TaskCheckbox checked={child.status === 'completed'} size="sm" />
-                      <span
-                        className={cn(
-                          'flex-1 truncate text-text-primary',
-                          child.status === 'completed' && 'line-through text-text-muted',
-                        )}
-                      >
-                        {child.title}
-                      </span>
-                    </button>
-                  </li>
-                ))}
+                    <li key={child.id}>
+                      {editingSubtaskId === child.id ? (
+                        /* ── Inline edit mode ── */
+                        <div className="subtask-row">
+                          <TaskCheckbox
+                            checked={child.status === 'completed'}
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); toggleComplete(child.id) }}
+                          />
+                          <input
+                            ref={editingSubtaskRef}
+                            autoFocus
+                            value={editingSubtaskTitle}
+                            onChange={(e) => setEditingSubtaskTitle(e.target.value)}
+                            onBlur={() => saveSubtaskEdit(child.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') { e.preventDefault(); saveSubtaskEdit(child.id) }
+                              if (e.key === 'Escape') setEditingSubtaskId(null)
+                            }}
+                            className="flex-1 bg-transparent text-sm text-text-primary outline-none border-b border-accent"
+                          />
+                        </div>
+                      ) : (
+                        /* ── Normal view mode ── */
+                        <div className="subtask-row group">
+                          <TaskCheckbox
+                            checked={child.status === 'completed'}
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); toggleComplete(child.id) }}
+                          />
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => startEditSubtask(child.id, child.title)}
+                            onKeyDown={(e) => e.key === 'Enter' && startEditSubtask(child.id, child.title)}
+                            className={cn(
+                              'flex-1 truncate text-sm cursor-text select-none',
+                              child.status === 'completed' ? 'line-through text-text-muted' : 'text-text-primary',
+                            )}
+                          >
+                            {child.title}
+                          </span>
+                          {/* Open subtask detail */}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setSelectedTaskId(child.id) }}
+                            className="icon-btn shrink-0 opacity-0 group-hover:opacity-60 hover:opacity-100! transition-opacity"
+                            title="Open subtask"
+                          >
+                            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+                          </button>
+                          {/* Delete subtask */}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); deleteTask(child.id) }}
+                            className="icon-btn shrink-0 opacity-0 group-hover:opacity-60 hover:opacity-100! transition-opacity text-priority-p1 hover:bg-priority-p1/10"
+                            title="Delete subtask"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
               </ul>
 
               {addingSubtask && (

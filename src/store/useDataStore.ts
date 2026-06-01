@@ -3,6 +3,7 @@ import { listsApi } from '../api/lists'
 import { sectionsApi } from '../api/sections'
 import { tagsApi } from '../api/tags'
 import { tasksApi } from '../api/tasks'
+import { useAppStore } from './useAppStore'
 import {
   mergeTask,
   normalizeFolder,
@@ -273,6 +274,12 @@ export const useDataStore = create<DataState>()((set, get) => ({
         set((s) => ({
           tasks: s.tasks.map((t) => (t.id === temp.id ? normalized : t)),
         }))
+        // If this newly-created task is currently selected (by its temp ID),
+        // swap to the real server ID so "Task not found" never appears
+        const appStore = useAppStore.getState()
+        if (appStore.selectedTaskId === temp.id) {
+          appStore.setSelectedTaskId(normalized.id)
+        }
       })
       .catch((err) => {
         set((s) => ({
