@@ -298,46 +298,62 @@ export default function Sidebar() {
         </div>
 
         {/* ── Fixed bottom nav — always visible ── */}
-        <div className="sidebar-section pt-2 pb-4 border-t border-border space-y-0.5 shrink-0">
-          <NavButton
-            icon={CheckCircle2}
-            label="Completed"
-            active={isNavActive('completed')}
-            onClick={() => handleNavClick('completed')}
-          />
-          <NavButton
-            icon={Trash2}
-            label="Trash"
-            active={isNavActive('trash')}
-            onClick={() => handleNavClick('trash')}
-          />
+        <div className="sidebar-section shrink-0" style={{ paddingTop: 12, paddingBottom: 20, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+
+          {/* Completed + Trash */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <NavButton
+              icon={CheckCircle2}
+              label="Completed"
+              active={isNavActive('completed')}
+              onClick={() => handleNavClick('completed')}
+            />
+            <NavButton
+              icon={Trash2}
+              label="Trash"
+              active={isNavActive('trash')}
+              onClick={() => handleNavClick('trash')}
+            />
+          </div>
+
+          {/* Divider */}
+          {user && (
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 4px' }} />
+          )}
 
           {/* User row */}
           {user && (
-            <div className="mt-2 px-1">
+            <div style={{ padding: '0 4px' }}>
               {confirmLogout ? (
                 /* Confirmation state */
                 <div
-                  className="rounded-xl px-3 py-2.5 space-y-2.5"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 12,
+                    padding: '12px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                  }}
                 >
-                  <p className="text-[12px] text-text-secondary text-center leading-snug">
+                  <p className="text-[12.5px] text-text-secondary text-center leading-snug">
                     Sign out of <span className="font-semibold text-text-primary">{user.name}</span>?
                   </p>
-                  <div className="flex gap-2">
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       type="button"
                       onClick={() => setConfirmLogout(false)}
-                      className="flex-1 h-7 rounded-lg text-[12px] font-medium text-text-secondary transition-colors"
-                      style={{ background: 'rgba(255,255,255,0.06)' }}
+                      className="flex-1 rounded-lg text-[12.5px] font-medium text-text-secondary transition-colors"
+                      style={{ height: 32, background: 'rgba(255,255,255,0.07)' }}
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={logout}
-                      className="flex-1 h-7 rounded-lg text-[12px] font-semibold text-white transition-colors"
-                      style={{ background: 'var(--color-priority-p1)' }}
+                      className="flex-1 rounded-lg text-[12.5px] font-semibold text-white transition-colors"
+                      style={{ height: 32, background: 'var(--color-priority-p1)' }}
                     >
                       Sign out
                     </button>
@@ -345,15 +361,24 @@ export default function Sidebar() {
                 </div>
               ) : (
                 /* Normal user row */
-                <div className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg group">
+                <div
+                  className="flex items-center gap-3 rounded-xl group transition-colors hover:bg-white/4"
+                  style={{ padding: '8px 10px' }}
+                >
                   <div
-                    className="h-6 w-6 rounded-full bg-accent flex items-center justify-center text-[11px] font-bold text-white shrink-0 select-none"
+                    className="shrink-0 select-none flex items-center justify-center rounded-full bg-accent text-white font-bold"
+                    style={{ width: 30, height: 30, fontSize: 13 }}
                   >
                     {user.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="flex-1 truncate text-[13px] font-medium text-text-secondary">
-                    {user.name}
-                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="truncate text-[13px] font-medium text-text-primary leading-none" style={{ marginBottom: 3 }}>
+                      {user.name}
+                    </p>
+                    <p className="truncate text-[11px] text-text-muted leading-none">
+                      {user.email}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setConfirmLogout(true)}
