@@ -162,7 +162,7 @@ export default function AppLayout() {
           'flex flex-col min-w-0 h-full flex-1',
           mobilePane === 'detail' ? 'flex' : 'hidden lg:flex',
         )}
-        style={{ minWidth: 280 }}
+        style={{ minWidth: 0 }}
       >
         <TaskDetail />
       </div>

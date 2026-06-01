@@ -1181,3 +1181,95 @@ body,
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Mobile responsiveness
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── Safe area insets (iPhone notch / Dynamic Island) ─────── */
+#root {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ─── Larger touch targets on mobile ───────────────────────── */
+@media (max-width: 1023px) {
+  /* Nav items: minimum 44px tap target */
+  .nav-item {
+    height: 44px;
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  /* Task rows: taller for comfortable tapping */
+  .task-row {
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+  }
+
+  /* Section header: taller */
+  .section-header-row {
+    height: 36px;
+    min-height: 36px;
+  }
+
+  /* Icon buttons: larger tap area */
+  .icon-btn {
+    padding: 0.5rem;
+  }
+
+  /* Detail toolbar: taller */
+  .detail-toolbar {
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    padding: 0 14px;
+  }
+
+  /* Panel header: taller */
+  .panel-header {
+    min-height: 52px;
+    padding: 10px 14px;
+  }
+
+  /* Sidebar section: slightly more padding */
+  .sidebar-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Hide scrollbars on mobile (they cause layout shifts) */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+
+  /* Prevent text selection on tap */
+  .task-row,
+  .nav-item,
+  .section-header-row {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* Active states for touch feedback */
+  .task-row:active    { background-color: var(--color-bg-hover); }
+  .nav-item:active    { background-color: var(--color-bg-hover); }
+  .icon-btn:active    { background-color: var(--color-bg-hover); }
+}
+
+/* ─── Small phone (≤ 480px) ─────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Slightly smaller base font to fit more content */
+  .task-row { font-size: 13px; }
+
+  /* Detail panel: full-screen feel */
+  .detail-panel-title { font-size: 16px; }
+  .detail-panel-content { padding: 14px 16px 16px; }
+
+  /* Add task bar: edge-to-edge on small phones */
+  .add-task-bar-wrap {
+    padding: 4px 8px 6px;
+  }
+
+  /* List title */
+  .list-panel-title { font-size: 15px; }
+}

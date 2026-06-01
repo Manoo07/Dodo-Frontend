@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
-import { cn } from '../../lib/cn'
+import { Hash } from 'lucide-react'
 
 interface Props {
   onAdd: (name: string) => void
@@ -26,28 +25,55 @@ export default function AddSectionBar({ onAdd, onCancel, autoFocus }: Props) {
   }
 
   return (
-    <div
-      className={cn(
-        'flex items-center gap-3 px-5 py-3 border-b border-border transition-colors',
-        focused ? 'bg-bg-surface' : 'bg-bg-elevated',
-      )}
-    >
-      <ChevronDown className="h-4 w-4 text-text-muted shrink-0" strokeWidth={1.75} />
-      <input
-        ref={inputRef}
-        autoFocus={autoFocus}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        placeholder="Please enter the section name. Press Enter to create"
-        className={cn(
-          'flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none',
-          'border-b-2 pb-1 transition-colors',
-          focused ? 'border-accent' : 'border-transparent',
+    <div style={{ padding: '4px 12px 6px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          height: 36,
+          padding: '0 12px',
+          borderRadius: 8,
+          border: `1.5px solid ${focused ? 'var(--color-accent)' : 'rgba(255,255,255,0.1)'}`,
+          background: focused ? 'var(--color-bg-surface)' : 'rgba(255,255,255,0.03)',
+          transition: 'border-color 0.15s, background 0.15s',
+        }}
+      >
+        <Hash
+          style={{
+            width: 14, height: 14, flexShrink: 0,
+            color: focused ? 'var(--color-accent)' : 'var(--color-text-muted)',
+            transition: 'color 0.15s',
+          }}
+          strokeWidth={2}
+        />
+        <input
+          ref={inputRef}
+          autoFocus={autoFocus}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false)
+            if (!name.trim()) onCancel?.()
+          }}
+          placeholder="Section name… Press Enter to create"
+          style={{
+            flex: 1,
+            background: 'transparent',
+            outline: 'none',
+            fontSize: 13,
+            color: 'var(--color-text-primary)',
+          }}
+          className="placeholder:text-text-muted/50"
+        />
+        {name.trim() && (
+          <span style={{ fontSize: 11, color: 'var(--color-text-muted)', opacity: 0.7, flexShrink: 0 }}>
+            ↵
+          </span>
         )}
-      />
+      </div>
     </div>
   )
 }
