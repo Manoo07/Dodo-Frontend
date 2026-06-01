@@ -738,12 +738,16 @@ body,
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 12px;
+  flex-shrink: 0;
+  padding-top: 10px;
+  padding-bottom: 4px;
+  border-top: 1px solid var(--color-border);
   font-size: 14px;
   font-weight: 500;
   opacity: 0.85;
   color: var(--color-accent);
   transition: opacity 0.15s;
+  background: var(--color-bg-primary);   /* covers scrolled content */
 }
 
 .add-subtask-link:hover {
@@ -812,9 +816,16 @@ body,
 .detail-subtasks-pane {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;       /* pane does NOT scroll */
   display: flex;
   flex-direction: column;
+}
+
+/* The subtask list scrolls; Add Subtask button stays pinned at bottom */
+.detail-subtasks-pane > section {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* ── Icon rail avatar ── */

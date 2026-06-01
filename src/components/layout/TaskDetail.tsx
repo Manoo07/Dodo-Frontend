@@ -385,7 +385,7 @@ export default function TaskDetail() {
 
         {/* Bottom pane: subtasks */}
         <div className="detail-subtasks-pane detail-panel-content">
-          <section className="flex-1 min-h-0">
+          <section>
             <h3 className="subtask-section-header">Subtasks</h3>
             {(task.children && task.children.length > 0) || addingSubtask ? (
               <>
