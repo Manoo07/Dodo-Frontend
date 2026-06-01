@@ -263,7 +263,12 @@ export default function TaskDetail() {
 
         <button
           type="button"
-          title="Set priority"
+          title={
+            task.priority === 'none' ? 'Set priority'
+            : task.priority === 'p1' ? 'Priority: High — click to change'
+            : task.priority === 'p2' ? 'Priority: Medium — click to change'
+            : 'Priority: Low — click to change'
+          }
           onClick={cyclePriority}
           className="icon-btn"
           style={task.priority !== 'none' ? { color: PRIORITY_COLORS[task.priority] } : undefined}

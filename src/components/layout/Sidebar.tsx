@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Sun,
   CalendarRange,
@@ -321,100 +322,37 @@ export default function Sidebar() {
             <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 4px' }} />
           )}
 
-          {/* User row */}
+          {/* User row — always visible, no inline dialog */}
           {user && (
             <div style={{ padding: '0 4px' }}>
-              {confirmLogout ? (
-                /* ── Logout warning dialog ── */
+              <div
+                className="flex items-center gap-3 rounded-xl group transition-colors hover:bg-white/4"
+                style={{ padding: '8px 10px' }}
+              >
                 <div
-                  style={{
-                    background: '#1e1e22',
-                    border: '1px solid rgba(224,82,82,0.25)',
-                    borderRadius: 14,
-                    padding: '18px 16px 14px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 14,
-                    boxShadow: '0 4px 24px rgba(224,82,82,0.12)',
-                  }}
+                  className="shrink-0 select-none flex items-center justify-center rounded-full bg-accent text-white font-bold"
+                  style={{ width: 30, height: 30, fontSize: 13 }}
                 >
-                  {/* Warning icon */}
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
-                      background: 'rgba(224,82,82,0.12)',
-                      border: '1px solid rgba(224,82,82,0.25)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <LogOut className="h-4.5 w-4.5" style={{ color: 'var(--color-priority-p1)' }} strokeWidth={1.75} />
-                  </div>
-
-                  {/* Text */}
-                  <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <p className="text-[13.5px] font-semibold text-text-primary">Sign out?</p>
-                    <p className="text-[12px] text-text-muted leading-relaxed">
-                      You'll be signed out of <span className="text-text-secondary font-medium">{user.name.split(' ')[0]}</span>'s account.
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmLogout(false)}
-                      className="flex-1 rounded-xl text-[13px] font-medium text-text-secondary transition-colors hover:text-text-primary"
-                      style={{ height: 36, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={logout}
-                      className="flex-1 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90 active:scale-95"
-                      style={{ height: 36, background: 'var(--color-priority-p1)' }}
-                    >
-                      Sign out
-                    </button>
-                  </div>
+                  {user.name.charAt(0).toUpperCase()}
                 </div>
-              ) : (
-                /* Normal user row */
-                <div
-                  className="flex items-center gap-3 rounded-xl group transition-colors hover:bg-white/4"
-                  style={{ padding: '8px 10px' }}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p className="truncate text-[13px] font-medium text-text-primary leading-none" style={{ marginBottom: 3 }}>
+                    {user.name}
+                  </p>
+                  <p className="truncate text-[11px] text-text-muted leading-none">
+                    {user.email}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setConfirmLogout(true)}
+                  title="Sign out"
+                  className="icon-btn shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Sign out"
                 >
-                  <div
-                    className="shrink-0 select-none flex items-center justify-center rounded-full bg-accent text-white font-bold"
-                    style={{ width: 30, height: 30, fontSize: 13 }}
-                  >
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className="truncate text-[13px] font-medium text-text-primary leading-none" style={{ marginBottom: 3 }}>
-                      {user.name}
-                    </p>
-                    <p className="truncate text-[11px] text-text-muted leading-none">
-                      {user.email}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmLogout(true)}
-                    title="Sign out"
-                    className="icon-btn shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Sign out"
-                  >
-                    <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
-                  </button>
-                </div>
-              )}
+                  <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -422,6 +360,73 @@ export default function Sidebar() {
       </aside>
 
       <AddListModal open={showAddList} onClose={() => setShowAddList(false)} />
+
+      {/* ── Centered sign-out confirmation modal ── */}
+      {confirmLogout && user && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.6)', padding: 20 }}
+          onClick={() => setConfirmLogout(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 360,
+              background: '#1e1e22',
+              border: '1px solid rgba(224,82,82,0.3)',
+              borderRadius: 18,
+              padding: '28px 24px 22px',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(224,82,82,0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16,
+            }}
+          >
+            {/* Icon */}
+            <div style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: 'rgba(224,82,82,0.12)',
+              border: '1px solid rgba(224,82,82,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <LogOut style={{ width: 22, height: 22, color: 'var(--color-priority-p1)' }} strokeWidth={1.75} />
+            </div>
+
+            {/* Text */}
+            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p className="text-[16px] font-semibold text-text-primary">Sign out?</p>
+              <p className="text-[13px] text-text-muted leading-relaxed">
+                You'll be signed out of{' '}
+                <span className="text-text-secondary font-medium">{user.name}</span>'s account.<br />
+                You'll need to log in again to continue.
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 10, width: '100%', marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={() => setConfirmLogout(false)}
+                className="flex-1 rounded-xl text-[13.5px] font-medium text-text-secondary transition-colors hover:text-text-primary"
+                style={{ height: 42, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex-1 rounded-xl text-[13.5px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ height: 42, background: 'var(--color-priority-p1)' }}
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </>
   )
 }
