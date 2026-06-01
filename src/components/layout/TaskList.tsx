@@ -201,6 +201,8 @@ export default function TaskList() {
           onMarkWontDo={isTrashView || isCompletedView ? undefined : markWontDo}
           onRestore={isTrashView ? restoreTask : undefined}
           onPin={isTrashView || isCompletedView ? undefined : handlePin}
+          onSetDate={isTrashView || isCompletedView ? undefined : (id, date) => updateTask(id, { dueDate: date })}
+          onSetPriority={isTrashView || isCompletedView ? undefined : (id, priority) => updateTask(id, { priority })}
         />
         {addingSubtaskFor === task.id && isListView && (
           <div style={{ paddingLeft: `${10 + (depth + 1) * 20}px` }}>

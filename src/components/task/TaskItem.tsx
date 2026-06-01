@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ChevronRight, Flag, AlertCircle, Calendar, ListTree } from 'lucide-react'
 import type { Task } from '../../types'
-import TaskContextMenu, { buildTaskMenuItems } from './TaskContextMenu'
+import TaskContextMenu from './TaskContextMenu'
+import { buildTaskMenuItems } from './taskMenuBuilder'
 import TaskCheckbox from '../ui/TaskCheckbox'
 import { cn } from '../../lib/cn'
 
@@ -26,6 +27,8 @@ interface Props {
   onMarkWontDo?: (id: string) => void
   onRestore?: (id: string) => void
   onPin?: (id: string, isPinned: boolean) => void
+  onSetDate?: (id: string, date: string | null) => void
+  onSetPriority?: (id: string, priority: import('../../types').Priority) => void
 }
 
 export default function TaskItem({
@@ -42,6 +45,8 @@ export default function TaskItem({
   onMarkWontDo,
   onRestore,
   onPin,
+  onSetDate,
+  onSetPriority,
 }: Props) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
@@ -176,6 +181,9 @@ export default function TaskItem({
           y={contextMenu.y}
           items={menuItems}
           onClose={() => setContextMenu(null)}
+          task={{ dueDate: task.dueDate, priority: task.priority }}
+          onSetDate={onSetDate ? (d) => onSetDate(task.id, d) : undefined}
+          onSetPriority={onSetPriority ? (p) => onSetPriority(task.id, p) : undefined}
         />
       )}
     </>
