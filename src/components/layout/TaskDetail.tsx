@@ -77,6 +77,17 @@ export default function TaskDetail() {
   const task = selectedTaskId ? getTaskWithTree(selectedTaskId) : undefined
   const breadcrumb = selectedTaskId ? buildBreadcrumb(selectedTaskId) : []
 
+  // ── Derived-state sync (runs synchronously during render, before paint) ──────
+  // This ensures the MarkdownEditor is initialized with the CORRECT content
+  // when task.id changes — useEffect runs *after* render so the editor would
+  // receive stale parent description on the first frame.
+  const [syncedTaskId, setSyncedTaskId] = useState<string | null>(null)
+  if (task?.id !== syncedTaskId) {
+    setSyncedTaskId(task?.id ?? null)
+    setTitle(task?.title ?? '')
+    setDescription(task?.description ?? '')
+  }
+
   useEffect(() => {
     const el = splitRef.current
     if (!el) return
@@ -103,12 +114,6 @@ export default function TaskDetail() {
     [setDetailNotesHeight],
   )
 
-  useEffect(() => {
-    if (task) {
-      setTitle(task.title)
-      setDescription(task.description)
-    }
-  }, [task?.id, task?.title, task?.description])
 
   useEffect(() => {
     return () => {
