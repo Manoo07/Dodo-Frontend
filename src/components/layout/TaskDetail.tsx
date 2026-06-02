@@ -48,17 +48,57 @@ function buildBreadcrumb(taskId: string): { id: string; title: string }[] {
   return chain
 }
 
+// ── Shell: handles empty / not-found states, then mounts the real panel ──────
 export default function TaskDetail() {
-  const { selectedTaskId, setSelectedTaskId, setMobilePane } = useAppStore()
+  const { selectedTaskId, setMobilePane } = useAppStore()
   const getTaskWithTree = useDataStore((s) => s.getTaskWithTree)
-  const updateTask = useDataStore((s) => s.updateTask)
-  const toggleComplete = useDataStore((s) => s.toggleComplete)
-  const deleteTask = useDataStore((s) => s.deleteTask)
-  const markWontDo = useDataStore((s) => s.markWontDo)
-  const createTask = useDataStore((s) => s.createTask)
+  const task = selectedTaskId ? getTaskWithTree(selectedTaskId) : undefined
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  if (!selectedTaskId) {
+    return (
+      <main className="flex-1 flex flex-col bg-bg-primary">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span className="text-5xl opacity-20">📝</span>
+            <span className="text-sm text-text-muted">Select a task to view details</span>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (!task) {
+    return (
+      <main className="flex-1 flex items-center justify-center bg-bg-primary">
+        <span className="text-sm text-text-muted">Task not found</span>
+      </main>
+    )
+  }
+
+  // key={task.id} forces a full remount when task changes — all useState
+  // initialisers re-run with fresh values, so stale description can never
+  // bleed from a parent into a child task.
+  return <TaskDetailContent key={task.id} task={task} onBack={() => setMobilePane('list')} />
+}
+
+// ── Real content panel — remounts on every task.id change ────────────────────
+function TaskDetailContent({
+  task,
+  onBack,
+}: {
+  task: NonNullable<ReturnType<ReturnType<typeof useDataStore.getState>['getTaskWithTree']>>
+  onBack: () => void
+}) {
+  const { setSelectedTaskId } = useAppStore()
+  const updateTask    = useDataStore((s) => s.updateTask)
+  const toggleComplete = useDataStore((s) => s.toggleComplete)
+  const deleteTask    = useDataStore((s) => s.deleteTask)
+  const markWontDo    = useDataStore((s) => s.markWontDo)
+  const createTask    = useDataStore((s) => s.createTask)
+
+  // Initialise from task — correct because this component remounts per task.id
+  const [title, setTitle] = useState(task.title)
+  const [description, setDescription] = useState(task.description)
   const [addingSubtask, setAddingSubtask] = useState(false)
   const [subtaskTitle, setSubtaskTitle] = useState('')
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null)
@@ -74,19 +114,10 @@ export default function TaskDetail() {
   const detailNotesHeight = useLayoutStore((s) => s.detailNotesHeight)
   const setDetailNotesHeight = useLayoutStore((s) => s.setDetailNotesHeight)
 
-  const task = selectedTaskId ? getTaskWithTree(selectedTaskId) : undefined
-  const breadcrumb = selectedTaskId ? buildBreadcrumb(selectedTaskId) : []
-
-  // ── Derived-state sync (runs synchronously during render, before paint) ──────
-  // This ensures the MarkdownEditor is initialized with the CORRECT content
-  // when task.id changes — useEffect runs *after* render so the editor would
-  // receive stale parent description on the first frame.
-  const [syncedTaskId, setSyncedTaskId] = useState<string | null>(null)
-  if (task?.id !== syncedTaskId) {
-    setSyncedTaskId(task?.id ?? null)
-    setTitle(task?.title ?? '')
-    setDescription(task?.description ?? '')
-  }
+  // Re-read live task data (children, tags, etc.) — but use local state for editing fields
+  const getTaskWithTree = useDataStore((s) => s.getTaskWithTree)
+  const liveTask = getTaskWithTree(task.id) ?? task
+  const breadcrumb = buildBreadcrumb(task.id)
 
   useEffect(() => {
     const el = splitRef.current
@@ -103,7 +134,7 @@ export default function TaskDetail() {
     const ro = new ResizeObserver(clampNotes)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [setDetailNotesHeight, selectedTaskId])
+  }, [setDetailNotesHeight, task.id])
 
   const handleNotesResize = useCallback(
     (deltaY: number) => {
@@ -205,29 +236,8 @@ export default function TaskDetail() {
     }
   }
 
-  if (!selectedTaskId) {
-    return (
-      <main className="flex-1 flex flex-col bg-bg-primary">
-        <div className="flex flex-1 items-center justify-center">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <span className="text-5xl opacity-20">📝</span>
-            <span className="text-sm text-text-muted">Select a task to view details</span>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  if (!task) {
-    return (
-      <main className="flex-1 flex items-center justify-center bg-bg-primary">
-        <span className="text-sm text-text-muted">Task not found</span>
-      </main>
-    )
-  }
-
-  const isCompleted = task.status === 'completed'
-  const isWontDo = task.status === 'wont_do'
+  const isCompleted = liveTask.status === 'completed'
+  const isWontDo    = liveTask.status === 'wont_do'
 
   const footerMenuItems = buildTaskMenuItems({
     onAddSubtask: () => setAddingSubtask(true),
@@ -245,7 +255,7 @@ export default function TaskDetail() {
       <div className="detail-toolbar">
         <button
           type="button"
-          onClick={() => setMobilePane('list')}
+          onClick={onBack}
           className="icon-btn lg:hidden shrink-0"
           aria-label="Back to task list"
         >
