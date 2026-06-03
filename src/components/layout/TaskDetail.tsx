@@ -256,12 +256,6 @@ function TaskDetailContent({
     saveDescription()
   }
 
-  function cyclePriority() {
-    if (!task) return
-    const idx = PRIORITY_CYCLE.indexOf(task.priority)
-    const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length]
-    updateTask(task.id, { priority: next })
-  }
 
   function formatDueLabel(d: string | null): string {
     if (!d) return 'Due Date'
