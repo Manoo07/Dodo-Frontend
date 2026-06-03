@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { toast } from './useToastStore'
 import { listsApi } from '../api/lists'
 import { sectionsApi } from '../api/sections'
 import { tagsApi } from '../api/tags'
@@ -155,6 +156,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       order: get().lists.length,
     }
     set((s) => ({ lists: [...s.lists, temp] }))
+    toast.success(`List "${p.name}" created`)
 
     void listsApi
       .create({
@@ -174,6 +176,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
           lists: s.lists.filter((l) => l.id !== temp.id),
           error: apiErrorMessage(err),
         }))
+        toast.error('Failed to create list')
       })
 
     return temp
@@ -190,12 +193,15 @@ export const useDataStore = create<DataState>()((set, get) => ({
   deleteList: (id) => {
     const prevLists = get().lists
     const prevTasks = get().tasks
+    const name = prevLists.find((l) => l.id === id)?.name ?? 'List'
     set((s) => ({
       lists: s.lists.filter((l) => l.id !== id),
       tasks: s.tasks.filter((t) => t.listId !== id),
     }))
+    toast.success(`"${name}" deleted`)
     void listsApi.delete(id).catch((err) => {
       set({ lists: prevLists, tasks: prevTasks, error: apiErrorMessage(err) })
+      toast.error('Failed to delete list')
     })
   },
 
@@ -208,6 +214,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       collapsed: false,
     }
     set((s) => ({ sections: [...s.sections, temp] }))
+    toast.success(`Section "${p.name}" created`)
 
     void sectionsApi
       .create({ name: p.name, listId: p.listId })
@@ -258,6 +265,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       reminders: [],
     }
     set((s) => ({ tasks: [...s.tasks, temp] }))
+    toast.success(`Task "${p.title}" added`)
 
     void tasksApi
       .create({
@@ -314,10 +322,10 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   toggleComplete: (id) => {
     const prev = get().tasks.find((t) => t.id === id)
+    const completing = prev?.status !== 'completed'
     set((s) => ({
       tasks: s.tasks.map((t) => {
         if (t.id !== id) return t
-        const completing = t.status !== 'completed'
         return {
           ...t,
           status: completing ? ('completed' as const) : ('active' as const),
@@ -326,6 +334,8 @@ export const useDataStore = create<DataState>()((set, get) => ({
         }
       }),
     }))
+    if (completing) toast.success(`✓ "${prev?.title ?? 'Task'}" completed`)
+    else toast.info(`"${prev?.title ?? 'Task'}" marked active`)
     void tasksApi
       .toggleComplete(id)
       .then((task) => {
@@ -341,6 +351,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   markWontDo: (id) => {
     const prev = get().tasks.find((t) => t.id === id)
+    toast.info(`"${prev?.title ?? 'Task'}" marked as Won't Do`)
     set((s) => ({
       tasks: s.tasks.map((t) =>
         t.id === id ? { ...t, status: 'wont_do' as const, updatedAt: new Date().toISOString() } : t,
@@ -366,13 +377,16 @@ export const useDataStore = create<DataState>()((set, get) => ({
         t.id === id ? { ...t, status: 'deleted' as const, updatedAt: new Date().toISOString() } : t,
       ),
     }))
+    toast.success(`"${prev?.title ?? 'Task'}" moved to Trash`)
     void tasksApi.delete(id).catch((err) => {
       if (prev) set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? prev : t)), error: apiErrorMessage(err) }))
+      toast.error('Failed to delete task')
     })
   },
 
   restoreTask: (id) => {
     const prev = get().tasks.find((t) => t.id === id)
+    toast.success(`"${prev?.title ?? 'Task'}" restored`)
     set((s) => ({
       tasks: s.tasks.map((t) =>
         t.id === id ? { ...t, status: 'active' as const, updatedAt: new Date().toISOString() } : t,
@@ -393,17 +407,23 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   permanentDeleteTask: (id) => {
     const prev = get().tasks
+    const name = prev.find((t) => t.id === id)?.title ?? 'Task'
     set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
+    toast.success(`"${name}" permanently deleted`)
     void tasksApi.permanentDelete(id).catch((err) => {
       set({ tasks: prev, error: apiErrorMessage(err) })
+      toast.error('Failed to delete task')
     })
   },
 
   emptyTrash: () => {
     const prev = get().tasks
+    const count = prev.filter((t) => t.status === 'deleted').length
     set((s) => ({ tasks: s.tasks.filter((t) => t.status !== 'deleted') }))
+    toast.success(`Trash emptied — ${count} task${count !== 1 ? 's' : ''} removed`)
     void tasksApi.emptyTrash().catch((err) => {
       set({ tasks: prev, error: apiErrorMessage(err) })
+      toast.error('Failed to empty trash')
     })
   },
 
@@ -416,8 +436,12 @@ export const useDataStore = create<DataState>()((set, get) => ({
       .then((task) => {
         const normalized = normalizeTask(task as unknown as Record<string, unknown>)
         set((s) => ({ tasks: [...s.tasks, normalized] }))
+        toast.success(`"${original.title}" duplicated`)
       })
-      .catch((err) => set({ error: apiErrorMessage(err) }))
+      .catch((err) => {
+        set({ error: apiErrorMessage(err) })
+        toast.error('Failed to duplicate task')
+      })
 
     return original
   },
@@ -462,6 +486,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
     const temp: Tag = { id: `temp-${Date.now()}`, name: n, color: color ?? '#5b9bd5' }
     set((s) => ({ tags: [...s.tags, temp] }))
+    toast.success(`Tag "#${n}" created`)
 
     void tagsApi
       .create({ name: n, color: color ?? '#5b9bd5' })
