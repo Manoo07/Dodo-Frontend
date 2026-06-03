@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown } from 'lucide-react'
 import {
   DndContext,
   DragOverlay,
@@ -97,6 +97,8 @@ export default function TaskList() {
   const [showAddSection, setShowAddSection] = useState(false)
   const [addingSubtaskFor, setAddingSubtaskFor] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  // Which groups have their "N completed" sub-section expanded
+  const [completedExpanded, setCompletedExpanded] = useState<Set<string>>(new Set())
 
   // Require 8px movement before drag starts so clicks still work
   const sensors = useSensors(
@@ -272,56 +274,123 @@ export default function TaskList() {
     )
   }
 
-  /** Render a flat list of root tasks wrapped in DnD sortable context */
-  function renderSortableGroup(groupTasks: Task[]) {
-    const rootTasks = groupTasks  // already root-level for each group
-    const ids = rootTasks.map((t) => t.id)
+  /** Collapsible "N completed" strip shown at the bottom of each group */
+  function renderCompletedStrip(doneTasks: Task[], groupKey: string) {
+    if (doneTasks.length === 0 || isTrashView || isCompletedView) return null
+    const open = completedExpanded.has(groupKey)
+
     return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={(e) => handleDragEnd(e, rootTasks)}
-      >
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          {rootTasks.map((task) => (
-            <SortableItem key={task.id} id={task.id} disabled={isTrashView || isCompletedView}>
-              {(handleProps) => (
-                <>
-                  {renderTaskItem(task, 0, handleProps)}
-                  {task.children && expandedIds.has(task.id) &&
-                    flattenTree(task.children, 1, expandedIds).map(({ task: child, depth }) =>
-                      renderTaskItem(child, depth)
-                    )
-                  }
-                </>
-              )}
-            </SortableItem>
-          ))}
-        </SortableContext>
-        <DragOverlay>
-          {activeDragId ? (() => {
-            const t = tasksFlat.find((x) => x.id === activeDragId)
-            if (!t) return null
-            return (
-              <div
-                className="flex items-center gap-2 px-3 rounded-lg text-sm font-medium text-text-primary"
-                style={{
-                  height: 36,
-                  background: '#1e1e22',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-                  opacity: 0.95,
-                  cursor: 'grabbing',
-                }}
-              >
-                <GripVertical className="h-3.5 w-3.5 text-text-muted shrink-0" strokeWidth={2} />
-                <span className="flex-1 truncate">{t.title}</span>
+      <div>
+        {/* Toggle row */}
+        <button
+          type="button"
+          onClick={() =>
+            setCompletedExpanded((prev) => {
+              const next = new Set(prev)
+              open ? next.delete(groupKey) : next.add(groupKey)
+              return next
+            })
+          }
+          className="flex items-center gap-2 w-full px-3 py-1.5 text-left group"
+        >
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+          <CheckCircle2
+            className="h-3.5 w-3.5 shrink-0 transition-colors"
+            style={{ color: open ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+            strokeWidth={1.75}
+          />
+          <span
+            className="text-[12px] font-medium whitespace-nowrap shrink-0 transition-colors"
+            style={{ color: open ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+          >
+            {doneTasks.length} completed
+          </span>
+          <ChevronDown
+            className="h-3.5 w-3.5 shrink-0 transition-all"
+            style={{
+              color: open ? 'var(--color-accent)' : 'var(--color-text-muted)',
+              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}
+            strokeWidth={1.75}
+          />
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+        </button>
+
+        {/* Completed task rows */}
+        {open && (
+          <div style={{ opacity: 0.65 }}>
+            {doneTasks.map((task) => (
+              <div key={task.id}>
+                {renderTaskItem(task, 0)}
+                {task.children && expandedIds.has(task.id) &&
+                  flattenTree(task.children, 1, expandedIds).map(({ task: child, depth }) =>
+                    renderTaskItem(child, depth)
+                  )
+                }
               </div>
-            )
-          })() : null}
-        </DragOverlay>
-      </DndContext>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  /** Render active tasks with DnD + completed strip at the bottom */
+  function renderSortableGroup(groupTasks: Task[], groupKey = '__default') {
+    const activeTasks    = groupTasks.filter((t) => t.status === 'active')
+    const completedTasks = groupTasks.filter((t) => t.status !== 'active')
+    const ids = activeTasks.map((t) => t.id)
+
+    return (
+      <>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={(e) => handleDragEnd(e, activeTasks)}
+        >
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            {activeTasks.map((task) => (
+              <SortableItem key={task.id} id={task.id} disabled={isTrashView || isCompletedView}>
+                {(handleProps) => (
+                  <>
+                    {renderTaskItem(task, 0, handleProps)}
+                    {task.children && expandedIds.has(task.id) &&
+                      flattenTree(task.children, 1, expandedIds).map(({ task: child, depth }) =>
+                        renderTaskItem(child, depth)
+                      )
+                    }
+                  </>
+                )}
+              </SortableItem>
+            ))}
+          </SortableContext>
+          <DragOverlay>
+            {activeDragId ? (() => {
+              const t = tasksFlat.find((x) => x.id === activeDragId)
+              if (!t) return null
+              return (
+                <div
+                  className="flex items-center gap-2 px-3 rounded-lg text-sm font-medium text-text-primary"
+                  style={{
+                    height: 36,
+                    background: '#1e1e22',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                    opacity: 0.95,
+                    cursor: 'grabbing',
+                  }}
+                >
+                  <GripVertical className="h-3.5 w-3.5 text-text-muted shrink-0" strokeWidth={2} />
+                  <span className="flex-1 truncate">{t.title}</span>
+                </div>
+              )
+            })() : null}
+          </DragOverlay>
+        </DndContext>
+
+        {renderCompletedStrip(completedTasks, groupKey)}
+      </>
     )
   }
 
@@ -452,7 +521,8 @@ export default function TaskList() {
           </div>
         ) : isListView && taskGroups ? (
           taskGroups.map((group) => {
-            const groupFlat = flattenTree(group.tasks, 0, expandedIds)
+            const activeSectionTasks = group.tasks.filter((t) => t.status === 'active')
+            const groupFlat = flattenTree(activeSectionTasks, 0, expandedIds)
             const isExpanded = expandedSections.has(group.id)
 
             return (
@@ -468,7 +538,7 @@ export default function TaskList() {
                     {group.tasks.length === 0 ? (
                       <p className="px-4 py-2 text-xs text-text-muted">No tasks in this section</p>
                     ) : (
-                      renderSortableGroup(group.tasks)
+                      renderSortableGroup(group.tasks, group.id)
                     )}
                   </div>
                 )}
@@ -476,7 +546,7 @@ export default function TaskList() {
             )
           })
         ) : (
-          isListView ? renderSortableGroup(tasks) : renderTaskRows(tasks)
+          isListView ? renderSortableGroup(tasks, '__flat') : renderTaskRows(tasks)
         )}
       </div>
     </div>
