@@ -199,15 +199,20 @@ function DigestSettings({
   onSave: (utcHour: number) => void
   onClose: () => void
 }) {
-  // Convert stored UTC hour → user's local hour for display
-  const localToUtc = (localH: number) => {
-    const d = new Date(); d.setHours(localH, 0, 0, 0); return d.getUTCHours()
-  }
-  const utcToLocal = (utcH: number) => {
-    const d = new Date(); d.setUTCHours(utcH, 0, 0, 0); return d.getHours()
-  }
+  // Use getTimezoneOffset() — stable per-render, no new Date() inside conversion
+  // getTimezoneOffset() = (UTC - local) in minutes, e.g. UTC+5:30 → -330
+  const tzOffsetMinutes = new Date().getTimezoneOffset()
+
+  const localToUtc = (localH: number) =>
+    Math.floor((((localH * 60 + tzOffsetMinutes) % 1440) + 1440) % 1440 / 60)
+
+  const utcToLocal = (utcH: number) =>
+    Math.floor((((utcH * 60 - tzOffsetMinutes) % 1440) + 1440) % 1440 / 60)
 
   const [selected, setSelected] = useState(utcToLocal(currentHour))
+
+  // Compute ONCE per render — same value used for both the preview text and the save
+  const utcHour = localToUtc(selected)
 
   const hours = Array.from({ length: 24 }, (_, i) => {
     const h12 = i % 12 === 0 ? 12 : i % 12
@@ -256,7 +261,7 @@ function DigestSettings({
       </div>
 
       <p className="text-[11px] text-text-muted">
-        Your local time · stored as {localToUtc(selected).toString().padStart(2, '0')}:00 UTC
+        Your local time · stored as {utcHour.toString().padStart(2, '0')}:00 UTC
       </p>
 
       {/* Actions */}
@@ -271,7 +276,7 @@ function DigestSettings({
         </button>
         <button
           type="button"
-          onClick={() => onSave(localToUtc(selected))}
+          onClick={() => onSave(utcHour)}
           className="flex-1 rounded-lg text-[12.5px] font-semibold text-white flex items-center justify-center gap-1.5 transition-colors hover:opacity-90"
           style={{ height: 30, background: 'var(--color-accent)' }}
         >
