@@ -95,12 +95,13 @@ function TaskDetailContent({
   onBack: () => void
 }) {
   const { setSelectedTaskId } = useAppStore()
-  const updateTask    = useDataStore((s) => s.updateTask)
+  const updateTask     = useDataStore((s) => s.updateTask)
+  const patchTaskLocal = useDataStore((s) => s.patchTaskLocal)
   const toggleComplete = useDataStore((s) => s.toggleComplete)
-  const deleteTask    = useDataStore((s) => s.deleteTask)
-  const restoreTask   = useDataStore((s) => s.restoreTask)
-  const markWontDo    = useDataStore((s) => s.markWontDo)
-  const createTask    = useDataStore((s) => s.createTask)
+  const deleteTask     = useDataStore((s) => s.deleteTask)
+  const restoreTask    = useDataStore((s) => s.restoreTask)
+  const markWontDo     = useDataStore((s) => s.markWontDo)
+  const createTask     = useDataStore((s) => s.createTask)
 
   // Initialise from task — correct because this component remounts per task.id
   const [title, setTitle] = useState(task.title)
@@ -112,6 +113,7 @@ function TaskDetailContent({
   const [footerMenu, setFooterMenu] = useState<{ x: number; y: number } | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const titleRef = useRef<HTMLTextAreaElement>(null)
+  const titleApiTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveDescriptionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const subtaskRef = useRef<HTMLInputElement>(null)
   const editingSubtaskRef = useRef<HTMLInputElement>(null)
@@ -155,6 +157,7 @@ function TaskDetailContent({
   useEffect(() => {
     return () => {
       if (saveDescriptionTimer.current) clearTimeout(saveDescriptionTimer.current)
+      if (titleApiTimer.current) clearTimeout(titleApiTimer.current)
     }
   }, [])
 
@@ -185,9 +188,26 @@ function TaskDetailContent({
     setEditingSubtaskId(null)
   }
 
+  function handleTitleChange(val: string) {
+    setTitle(val)
+    // Instantly patch the store so the task list row reflects the new title immediately
+    patchTaskLocal(task.id, { title: val.trim() || val })
+    // Debounce the real API call — fires 500ms after the user stops typing
+    if (titleApiTimer.current) clearTimeout(titleApiTimer.current)
+    titleApiTimer.current = setTimeout(() => {
+      if (val.trim()) updateTask(task.id, { title: val.trim() })
+    }, 500)
+  }
+
   function saveTitle() {
-    if (!task || title.trim() === task.title) return
-    updateTask(task.id, { title: title.trim() })
+    // Flush any pending debounce and commit immediately on blur
+    if (titleApiTimer.current) {
+      clearTimeout(titleApiTimer.current)
+      titleApiTimer.current = null
+    }
+    if (title.trim() && title.trim() !== liveTask.title) {
+      updateTask(task.id, { title: title.trim() })
+    }
   }
 
   function saveDescription() {
@@ -197,6 +217,9 @@ function TaskDetailContent({
 
   function handleDescriptionChange(next: string) {
     setDescription(next)
+    // Instantly patch the store so any other subscribers see the new description
+    patchTaskLocal(task.id, { description: next })
+    // Debounce the API call — fires 600ms after the user stops typing
     if (saveDescriptionTimer.current) clearTimeout(saveDescriptionTimer.current)
     saveDescriptionTimer.current = setTimeout(() => {
       if (task && next !== task.description) updateTask(task.id, { description: next })
@@ -359,7 +382,7 @@ function TaskDetailContent({
             <textarea
               ref={titleRef}
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => handleTitleChange(e.target.value)}
               onBlur={saveTitle}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {

@@ -82,6 +82,11 @@ interface DataState {
       Pick<Task, 'title' | 'description' | 'priority' | 'dueDate' | 'dueTime' | 'sectionId' | 'parentId' | 'isPinned' | 'status'>
     >,
   ) => void
+  /** Update local store immediately (no API call). Use while user is actively typing. */
+  patchTaskLocal: (
+    id: string,
+    p: Partial<Pick<Task, 'title' | 'description' | 'priority' | 'dueDate' | 'isPinned'>>,
+  ) => void
   toggleComplete: (id: string) => void
   markWontDo: (id: string) => void
   deleteTask: (id: string) => void
@@ -318,6 +323,14 @@ export const useDataStore = create<DataState>()((set, get) => ({
       .catch((err) => {
         if (prev) set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? prev : t)), error: apiErrorMessage(err) }))
       })
+  },
+
+  patchTaskLocal: (id, p) => {
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === id ? { ...t, ...p, updatedAt: new Date().toISOString() } : t,
+      ),
+    }))
   },
 
   toggleComplete: (id) => {
