@@ -22,6 +22,7 @@ import DatePicker from '../ui/DatePicker'
 import PanelResizer from './PanelResizer'
 import TaskContextMenu from '../task/TaskContextMenu'
 import { buildTaskMenuItems } from '../task/taskMenuBuilder'
+import PriorityPicker from '../ui/PriorityPicker'
 import MarkdownEditor from '../ui/MarkdownEditor'
 import { cn } from '../../lib/cn'
 import type { Priority } from '../../types'
@@ -112,6 +113,7 @@ function TaskDetailContent({
   const [editingSubtaskTitle, setEditingSubtaskTitle] = useState('')
   const [footerMenu, setFooterMenu] = useState<{ x: number; y: number } | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showPriorityPicker, setShowPriorityPicker] = useState(false)
   const titleRef = useRef<HTMLTextAreaElement>(null)
   const titleApiTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveDescriptionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -352,24 +354,31 @@ function TaskDetailContent({
 
         <div className="flex-1" />
 
-        <button
-          type="button"
-          title={
-            task.priority === 'none' ? 'Set priority'
-            : task.priority === 'p1' ? 'Priority: High — click to change'
-            : task.priority === 'p2' ? 'Priority: Medium — click to change'
-            : 'Priority: Low — click to change'
-          }
-          onClick={cyclePriority}
-          className="icon-btn"
-          style={task.priority !== 'none' ? { color: PRIORITY_COLORS[task.priority] } : undefined}
-        >
-          <Flag
-            className="nav-icon"
-            strokeWidth={1.8}
-            fill={task.priority !== 'none' ? PRIORITY_COLORS[task.priority] : 'none'}
-          />
-        </button>
+        {/* Priority picker — toolbar */}
+        <div className="relative">
+          <button
+            type="button"
+            title="Set priority"
+            onClick={() => setShowPriorityPicker((v) => !v)}
+            className="icon-btn"
+            style={liveTask.priority !== 'none' ? { color: PRIORITY_COLORS[liveTask.priority] } : undefined}
+          >
+            <Flag
+              className="nav-icon"
+              strokeWidth={1.8}
+              fill={liveTask.priority !== 'none' ? PRIORITY_COLORS[liveTask.priority] : 'none'}
+            />
+          </button>
+          {showPriorityPicker && (
+            <div className="absolute right-0 top-full mt-2 z-50">
+              <PriorityPicker
+                value={liveTask.priority}
+                onChange={(p) => updateTask(task.id, { priority: p })}
+                onClose={() => setShowPriorityPicker(false)}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div ref={splitRef} className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -601,19 +610,30 @@ function TaskDetailContent({
               )}
             </span>
             <div className="flex items-center gap-0.5">
-              <button
-                type="button"
-                title="Set priority"
-                onClick={cyclePriority}
-                className="icon-btn"
-                style={liveTask.priority !== 'none' ? { color: PRIORITY_COLORS[liveTask.priority] } : undefined}
-              >
-                <Flag
-                  className="nav-icon"
-                  strokeWidth={1.8}
-                  fill={liveTask.priority !== 'none' ? PRIORITY_COLORS[liveTask.priority] : 'none'}
-                />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  title="Set priority"
+                  onClick={() => setShowPriorityPicker((v) => !v)}
+                  className="icon-btn"
+                  style={liveTask.priority !== 'none' ? { color: PRIORITY_COLORS[liveTask.priority] } : undefined}
+                >
+                  <Flag
+                    className="nav-icon"
+                    strokeWidth={1.8}
+                    fill={liveTask.priority !== 'none' ? PRIORITY_COLORS[liveTask.priority] : 'none'}
+                  />
+                </button>
+                {showPriorityPicker && (
+                  <div className="absolute right-0 bottom-full mb-2 z-50">
+                    <PriorityPicker
+                      value={liveTask.priority}
+                      onChange={(p) => updateTask(task.id, { priority: p })}
+                      onClose={() => setShowPriorityPicker(false)}
+                    />
+                  </div>
+                )}
+              </div>
               <IconButton icon={MessageSquare} label="Comments" size="sm" />
               <button
                 type="button"

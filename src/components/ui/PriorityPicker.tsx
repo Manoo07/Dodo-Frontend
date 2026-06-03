@@ -1,67 +1,89 @@
-import { useEffect } from 'react'
-import { Check } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Flag, Check } from 'lucide-react'
+import type { Priority } from '../../types'
 
-type PriorityKey = 'p1' | 'p2' | 'p3' | 'none'
-
-interface PriorityOption {
-  key: PriorityKey
-  label: string
-  color: string
-}
-
-const OPTIONS: PriorityOption[] = [
-  { key: 'p1',   label: 'Urgent', color: '#e05252' },
-  { key: 'p2',   label: 'High',   color: '#d4853a' },
-  { key: 'p3',   label: 'Medium', color: '#5b9bd5' },
+const OPTIONS: { key: Priority; label: string; color: string }[] = [
+  { key: 'p1',   label: 'High',   color: '#e05252' },
+  { key: 'p2',   label: 'Medium', color: '#d4853a' },
+  { key: 'p3',   label: 'Low',    color: '#5b9bd5' },
   { key: 'none', label: 'None',   color: '#636369' },
 ]
 
-interface PriorityPickerProps {
-  value: PriorityKey
-  onChange: (p: PriorityKey) => void
+interface Props {
+  value: Priority
+  onChange: (p: Priority) => void
   onClose: () => void
 }
 
-export default function PriorityPicker({ value, onChange, onClose }: PriorityPickerProps) {
+export default function PriorityPicker({ value, onChange, onClose }: Props) {
+  const ref = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
   }, [onClose])
 
   return (
-    <div className="bg-bg-elevated border border-border rounded-xl py-1.5 shadow-xl w-44">
-      {OPTIONS.map((option) => (
-        <button
-          key={option.key}
-          type="button"
-          onClick={() => {
-            onChange(option.key)
-            onClose()
-          }}
-          className="w-full px-3 py-2 flex items-center gap-2.5 cursor-pointer hover:bg-bg-hover transition-colors"
-        >
-          {/* Colored dot */}
-          <span
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: option.color }}
-          />
-
-          {/* Label */}
-          <span className="text-sm text-text-primary flex-1 text-left">{option.label}</span>
-
-          {/* Check icon if active */}
-          {value === option.key && (
-            <Check
-              className="h-3.5 w-3.5 shrink-0"
-              strokeWidth={2.5}
-              style={{ color: '#5b9bd5' }}
+    <div
+      ref={ref}
+      style={{
+        background: '#1e1e22',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 14,
+        padding: '6px 6px',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.55)',
+        minWidth: 180,
+      }}
+    >
+      {OPTIONS.map((opt) => {
+        const active = value === opt.key
+        return (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => { onChange(opt.key); onClose() }}
+            className="w-full flex items-center gap-3 rounded-xl transition-colors text-left"
+            style={{
+              padding: '9px 12px',
+              background: active ? 'rgba(255,255,255,0.06)' : 'transparent',
+            }}
+            onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.04)' }}
+            onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
+          >
+            <Flag
+              className="h-4 w-4 shrink-0"
+              strokeWidth={1.75}
+              style={{
+                color: opt.color,
+                fill: opt.key !== 'none' ? opt.color : 'transparent',
+              }}
             />
-          )}
-        </button>
-      ))}
+            <span
+              className="flex-1 text-[13.5px] font-medium"
+              style={{ color: active ? opt.color : 'var(--color-text-primary)' }}
+            >
+              {opt.label}
+            </span>
+            {active && (
+              <Check
+                className="h-3.5 w-3.5 shrink-0"
+                strokeWidth={2.5}
+                style={{ color: opt.color }}
+              />
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }
