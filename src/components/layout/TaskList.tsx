@@ -90,8 +90,11 @@ export default function TaskList() {
   const duplicateTask = useDataStore((s) => s.duplicateTask)
   const markWontDo = useDataStore((s) => s.markWontDo)
   const toggleSection = useDataStore((s) => s.toggleSection)
-  const reorderTask = useDataStore((s) => s.reorderTask)
-  const hydrated = useDataStore((s) => s.hydrated)
+  const reorderTask    = useDataStore((s) => s.reorderTask)
+  const loadMoreTasks  = useDataStore((s) => s.loadMoreTasks)
+  const tasksHasMore   = useDataStore((s) => s.tasksHasMore)
+  const tasksTotal     = useDataStore((s) => s.tasksTotal)
+  const hydrated       = useDataStore((s) => s.hydrated)
 
   // ── All useState / useSensors MUST come before any early return ──────────────
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -573,6 +576,22 @@ export default function TaskList() {
           })
         ) : (
           isListView ? renderSortableGroup(tasks, '__flat') : renderTaskRows(tasks)
+        )}
+
+        {/* ── Load more ── */}
+        {tasksHasMore && (
+          <div className="px-4 py-3 flex items-center justify-between">
+            <span className="text-[12px] text-text-muted">
+              Showing {tasks.length} of {tasksTotal} tasks
+            </span>
+            <button
+              type="button"
+              onClick={() => void loadMoreTasks()}
+              className="text-[12.5px] font-semibold text-accent hover:text-accent-hover transition-colors"
+            >
+              Load more →
+            </button>
+          </div>
         )}
       </div>
     </div>

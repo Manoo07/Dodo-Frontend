@@ -2,8 +2,10 @@ import client from './client'
 import type { Task, CreateTaskPayload, UpdateTaskPayload } from '../types'
 
 export const tasksApi = {
-  getAll: () =>
-    client.get<Task[]>('/tasks/all').then((r) => r.data),
+  getAll: (page = 0, limit = 20) =>
+    client.get<{ tasks: Task[]; total: number; page: number; hasMore: boolean }>(
+      '/tasks/all', { params: { page, limit } },
+    ).then((r) => r.data),
 
   getByList: (listId: string) =>
     client.get<Task[]>(`/lists/${listId}/tasks`).then((r) => r.data),

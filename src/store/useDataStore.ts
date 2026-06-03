@@ -60,7 +60,11 @@ interface DataState {
   sections: Section[]
   tasks: Task[]
   tags: Tag[]
+  tasksPage: number
+  tasksHasMore: boolean
+  tasksTotal: number
   hydrate: () => Promise<void>
+  loadMoreTasks: () => Promise<void>
   clearError: () => void
   createList: (p: { name: string; icon?: string; color?: string; folderId?: string | null }) => List
   updateList: (id: string, p: Partial<Pick<List, 'name' | 'icon' | 'color' | 'folderId' | 'order'>>) => void
@@ -118,35 +122,61 @@ export const useDataStore = create<DataState>()((set, get) => ({
   sections: [],
   tasks: [],
   tags: [],
+  tasksPage: 0,
+  tasksHasMore: false,
+  tasksTotal: 0,
 
   hydrate: async () => {
     if (get().loading) return
     set({ loading: true, error: null })
     try {
-      const [foldersRaw, listsRaw, tagsRaw, sectionsRaw, tasksRaw] = await Promise.all([
+      const [foldersRaw, listsRaw, tagsRaw, sectionsRaw, tasksRes] = await Promise.all([
         listsApi.getFolders(),
         listsApi.getAll(),
         tagsApi.getAll(),
         sectionsApi.getAll(),
-        tasksApi.getAll(),
+        tasksApi.getAll(0, 20),   // page 0, 20 root tasks, 3 levels deep
       ])
 
       set({
-        folders: foldersRaw.map((f) => normalizeFolder(f as unknown as Record<string, unknown>)),
-        lists: listsRaw.map((l) => normalizeList(l as unknown as Record<string, unknown>)),
-        tags: tagsRaw.map((t) => normalizeTag(t as unknown as Record<string, unknown>)),
+        folders:  foldersRaw.map((f) => normalizeFolder(f as unknown as Record<string, unknown>)),
+        lists:    listsRaw.map((l) => normalizeList(l as unknown as Record<string, unknown>)),
+        tags:     tagsRaw.map((t) => normalizeTag(t as unknown as Record<string, unknown>)),
         sections: sectionsRaw.map((s) => normalizeSection(s as unknown as Record<string, unknown>)),
-        tasks: tasksRaw.map((t) => normalizeTask(t as unknown as Record<string, unknown>)),
+        tasks:    tasksRes.tasks.map((t) => normalizeTask(t as unknown as Record<string, unknown>)),
+        tasksPage:    tasksRes.page,
+        tasksHasMore: tasksRes.hasMore,
+        tasksTotal:   tasksRes.total,
         hydrated: true,
-        loading: false,
+        loading:  false,
       })
     } catch (err) {
+      set({ loading: false, hydrated: false, error: apiErrorMessage(err) })
+    }
+  },
+
+  loadMoreTasks: async () => {
+    const { tasksHasMore, tasksPage, loading } = get()
+    if (!tasksHasMore || loading) return
+    set({ loading: true })
+    try {
+      const nextPage = tasksPage + 1
+      const tasksRes = await tasksApi.getAll(nextPage, 20)
+      const newTasks = tasksRes.tasks.map((t) => normalizeTask(t as unknown as Record<string, unknown>))
+      // Merge — avoid duplicates by id
+      const existing = get().tasks
+      const existingIds = new Set(existing.map((t) => t.id))
+      const merged = [...existing, ...newTasks.filter((t) => !existingIds.has(t.id))]
       set({
-        loading: false,
-        hydrated: false,
-        error: apiErrorMessage(err),
+        tasks:        merged,
+        tasksPage:    tasksRes.page,
+        tasksHasMore: tasksRes.hasMore,
+        tasksTotal:   tasksRes.total,
+        loading:      false,
       })
-    } 
+    } catch (err) {
+      set({ loading: false, error: apiErrorMessage(err) })
+    }
   },
 
   clearError: () => set({ error: null }),
