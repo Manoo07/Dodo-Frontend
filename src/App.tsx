@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuthStore } from './store/useAuthStore'
 import AppLayout from './components/layout/AppLayout'
 import AuthPage from './pages/AuthPage'
+import DodoMark from './components/ui/DodoMark'
 
 // ── Loading screen ────────────────────────────────────────────────────────────
 
@@ -33,9 +34,12 @@ function LoadingScreen({ complete }: { complete: boolean }) {
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center">
       <div className="text-center select-none">
-        <h1 className="text-[28px] font-black tracking-[-0.04em] text-text-primary leading-none mb-4">
-          Do<span className="text-accent">do</span>
-        </h1>
+        <div className="flex items-center gap-3 mb-4">
+          <DodoMark size={36} />
+          <h1 className="text-[28px] font-black tracking-[-0.04em] text-text-primary leading-none">
+            dodo
+          </h1>
+        </div>
         <div
           className="mx-auto rounded-full overflow-hidden"
           style={{ width: 100, height: 3, background: 'rgba(255,255,255,0.07)' }}

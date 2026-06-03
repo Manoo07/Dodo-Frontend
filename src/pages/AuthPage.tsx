@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Eye, EyeOff, ArrowLeft, Loader } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { cn } from '../lib/cn'
+import DodoMark from '../components/ui/DodoMark'
 
 // ── Shared field ──────────────────────────────────────────────────────────────
 
@@ -491,11 +492,14 @@ export default function AuthPage() {
     >
 
       {/* ── Logo ── */}
-      <div className="mb-8 text-center select-none">
-        <h1 className="text-[36px] font-black tracking-[-0.04em] text-text-primary leading-none">
-          Do<span className="text-accent">do</span>
-        </h1>
-        <p className="mt-2 text-[13px] text-text-muted">Your focused task manager</p>
+      <div className="mb-8 text-center select-none flex flex-col items-center gap-3">
+        <DodoMark size={52} />
+        <div>
+          <h1 className="text-[28px] font-black tracking-[-0.04em] text-text-primary leading-none">
+            dodo
+          </h1>
+          <p className="mt-1.5 text-[13px] text-text-muted">Your focused task manager</p>
+        </div>
       </div>
 
       {/* ── Card ── */}
