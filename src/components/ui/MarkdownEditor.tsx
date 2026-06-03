@@ -2,10 +2,8 @@ import { useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
-import Link from '@tiptap/extension-link'
 import TaskList from '@tiptap/extension-task-list'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import Underline from '@tiptap/extension-underline'
 import Typography from '@tiptap/extension-typography'
 import Highlight from '@tiptap/extension-highlight'
 import { TableKit } from '@tiptap/extension-table'
@@ -46,10 +44,8 @@ export default function MarkdownEditor({
           heading: { levels: [1, 2, 3, 4] },
         }),
         DeferredBulletList,
-        Underline,
         Typography,
         Highlight.configure({ multicolor: false }),
-        Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
         TaskList,
         ExtendedTaskItem.configure({ nested: true }),
         CodeBlockLowlight.configure({ lowlight }),

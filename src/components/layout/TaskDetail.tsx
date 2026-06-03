@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import TaskDetailSkeleton from './TaskDetailSkeleton'
 import {
   ChevronRight,
@@ -122,9 +122,29 @@ function TaskDetailContent({
   const detailNotesHeight = useLayoutStore((s) => s.detailNotesHeight)
   const setDetailNotesHeight = useLayoutStore((s) => s.setDetailNotesHeight)
 
-  // Subscribe to tasks directly so any change (delete subtask, toggle, etc.)
-  // triggers a re-render and liveTask.children updates immediately without refresh
-  const liveTask = useDataStore((s) => s.getTaskWithTree(task.id) ?? task)
+  // ── Reactive liveTask — avoids infinite re-render loop ────────────────────
+  // Problem: getTaskWithTree() always returns a NEW object, so a reactive selector
+  // (s => s.getTaskWithTree(...)) triggers re-render → selector runs → new object
+  // → re-render → infinite loop (#185).
+  //
+  // Fix: subscribe to PRIMITIVE fingerprints (stable strings/numbers) that change
+  // only when relevant data changes. useMemo recomputes liveTask only then.
+  const getTaskWithTree  = useDataStore((s) => s.getTaskWithTree)
+  const taskUpdatedAt    = useDataStore((s) => s.tasks.find(t => t.id === task.id)?.updatedAt ?? '')
+  const taskStatus       = useDataStore((s) => s.tasks.find(t => t.id === task.id)?.status ?? '')
+  const childrenKey      = useDataStore((s) =>
+    s.tasks
+      .filter(t => t.parentId === task.id && t.status !== 'deleted')
+      .map(t => `${t.id}:${t.status}:${t.updatedAt}`)
+      .join('|'),
+  )
+
+  const liveTask = useMemo(
+    () => getTaskWithTree(task.id) ?? task,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getTaskWithTree, task.id, taskUpdatedAt, taskStatus, childrenKey],
+  )
+
   const breadcrumb = buildBreadcrumb(task.id)
 
   useEffect(() => {
