@@ -14,6 +14,8 @@ import {
   Folder,
   LogOut,
   X,
+  Bell,
+  Check,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useDataStore } from '../../store/useDataStore'
@@ -186,6 +188,103 @@ function FolderGroup({
   )
 }
 
+// ── Digest time settings ──────────────────────────────────────────────────────
+
+function DigestSettings({
+  currentHour,
+  onSave,
+  onClose,
+}: {
+  currentHour: number
+  onSave: (utcHour: number) => void
+  onClose: () => void
+}) {
+  // Convert stored UTC hour → user's local hour for display
+  const localToUtc = (localH: number) => {
+    const d = new Date(); d.setHours(localH, 0, 0, 0); return d.getUTCHours()
+  }
+  const utcToLocal = (utcH: number) => {
+    const d = new Date(); d.setUTCHours(utcH, 0, 0, 0); return d.getHours()
+  }
+
+  const [selected, setSelected] = useState(utcToLocal(currentHour))
+
+  const hours = Array.from({ length: 24 }, (_, i) => {
+    const h12 = i % 12 === 0 ? 12 : i % 12
+    const ampm = i < 12 ? 'AM' : 'PM'
+    return { value: i, label: `${h12}:00 ${ampm}` }
+  })
+
+  return (
+    <div
+      className="rounded-xl mt-1"
+      style={{
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        padding: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Bell className="h-3.5 w-3.5 text-accent shrink-0" strokeWidth={1.75} />
+        <p className="text-[12.5px] font-semibold text-text-primary">Daily email digest</p>
+      </div>
+      <p className="text-[11.5px] text-text-muted leading-relaxed">
+        Send me a summary of pending tasks every day at:
+      </p>
+
+      {/* Hour picker */}
+      <div className="relative">
+        <select
+          value={selected}
+          onChange={(e) => setSelected(Number(e.target.value))}
+          className="w-full rounded-lg text-[13px] text-text-primary outline-none appearance-none"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            height: 34,
+            padding: '0 12px',
+          }}
+        >
+          {hours.map((h) => (
+            <option key={h.value} value={h.value}>{h.label}</option>
+          ))}
+        </select>
+        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted rotate-90 pointer-events-none" strokeWidth={1.75} />
+      </div>
+
+      <p className="text-[11px] text-text-muted">
+        Your local time · stored as {localToUtc(selected).toString().padStart(2, '0')}:00 UTC
+      </p>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 rounded-lg text-[12.5px] font-medium text-text-muted transition-colors hover:text-text-primary"
+          style={{ height: 30, background: 'rgba(255,255,255,0.05)' }}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => onSave(localToUtc(selected))}
+          className="flex-1 rounded-lg text-[12.5px] font-semibold text-white flex items-center justify-center gap-1.5 transition-colors hover:opacity-90"
+          style={{ height: 30, background: 'var(--color-accent)' }}
+        >
+          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+          Save
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Main sidebar ──────────────────────────────────────────────────────────────
+
 export default function Sidebar() {
   const hydrated = useDataStore((s) => s.hydrated)
 
@@ -208,6 +307,9 @@ export default function Sidebar() {
 
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const updatePreferences = useAuthStore((s) => s.updatePreferences)
+
+  const [showDigestSettings, setShowDigestSettings] = useState(false)
 
   const [showAddList, setShowAddList] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
@@ -403,6 +505,16 @@ export default function Sidebar() {
                     {user.email}
                   </p>
                 </div>
+                {/* Digest settings toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowDigestSettings((v) => !v)}
+                  title="Email digest settings"
+                  className="icon-btn shrink-0 opacity-0 group-hover:opacity-100 transition-all"
+                  style={showDigestSettings ? { opacity: 1, color: 'var(--color-accent)' } : undefined}
+                >
+                  <Bell className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </button>
                 <button
                   type="button"
                   onClick={() => setConfirmLogout(true)}
@@ -413,6 +525,15 @@ export default function Sidebar() {
                   <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
                 </button>
               </div>
+
+              {/* Digest time picker */}
+              {showDigestSettings && (
+                <DigestSettings
+                  currentHour={user.digestHour ?? 18}
+                  onSave={(h) => { updatePreferences({ digestHour: h }); setShowDigestSettings(false) }}
+                  onClose={() => setShowDigestSettings(false)}
+                />
+              )}
             </div>
           )}
         </div>

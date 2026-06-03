@@ -4,6 +4,7 @@ export interface User {
   name: string
   emailVerified: boolean
   createdAt: string
+  digestHour: number   // UTC hour (0-23) for daily email digest
 }
 
 export type TaskStatus = 'active' | 'completed' | 'wont_do' | 'deleted'

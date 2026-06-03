@@ -22,6 +22,7 @@ interface AuthState {
   resetPassword: (token: string, password: string) => Promise<string>
   verifyEmail: (email: string, otp: string) => Promise<void>
   resendVerification: (email: string) => Promise<string>
+  updatePreferences: (prefs: { digestHour?: number }) => Promise<void>
   setAuthPage: (page: AuthPage) => void
   clearError: () => void
 }
@@ -139,6 +140,15 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     } catch (err) {
       set({ loading: false, error: apiError(err) })
       throw err
+    }
+  },
+
+  updatePreferences: async (prefs) => {
+    try {
+      const updated = await authApi.updatePreferences(prefs)
+      set({ user: updated })
+    } catch (err) {
+      set({ error: apiError(err) })
     }
   },
 
