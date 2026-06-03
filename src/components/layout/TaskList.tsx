@@ -281,14 +281,14 @@ export default function TaskList() {
     )
   }
 
-  /** Collapsible "N completed" strip shown at the bottom of each group */
+  /** Collapsible "Completed N" section header + task rows */
   function renderCompletedStrip(doneTasks: Task[], groupKey: string, depth = 0) {
     if (doneTasks.length === 0 || isTrashView || isCompletedView) return null
     const open = completedExpanded.has(groupKey)
 
     return (
       <div>
-        {/* Toggle row */}
+        {/* Section-header style toggle — matches the "Not Sectioned" / named section headers */}
         <button
           type="button"
           onClick={() =>
@@ -298,34 +298,24 @@ export default function TaskList() {
               return next
             })
           }
-          className="flex items-center gap-2 w-full px-3 py-1.5 text-left group"
+          className="section-header-row group"
+          style={{ paddingLeft: depth > 0 ? `${10 + depth * 20}px` : undefined }}
         >
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
-          <CheckCircle2
-            className="h-3.5 w-3.5 shrink-0 transition-colors"
-            style={{ color: open ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-            strokeWidth={1.75}
-          />
-          <span
-            className="text-[12px] font-medium whitespace-nowrap shrink-0 transition-colors"
-            style={{ color: open ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
-          >
-            {doneTasks.length} completed
-          </span>
           <ChevronDown
-            className="h-3.5 w-3.5 shrink-0 transition-all"
-            style={{
-              color: open ? 'var(--color-accent)' : 'var(--color-text-muted)',
-              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-            }}
+            className="h-4 w-4 text-text-muted shrink-0 transition-transform duration-150"
+            style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}
             strokeWidth={1.75}
           />
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+          <span className="section-header-title flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+            Completed
+          </span>
+          <span className="section-header-count">{doneTasks.length}</span>
         </button>
 
-        {/* Completed task rows — render at the given depth */}
+        {/* Completed task rows */}
         {open && (
-          <div style={{ opacity: 0.65 }}>
+          <div style={{ opacity: 0.55 }}>
             {doneTasks.map((task) => (
               <div key={task.id}>
                 {renderTaskItem(task, depth)}

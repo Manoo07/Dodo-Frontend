@@ -11,6 +11,7 @@ import {
   Plus,
   ClipboardList,
   Trash2,
+  RotateCcw,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useDataStore } from '../../store/useDataStore'
@@ -97,6 +98,7 @@ function TaskDetailContent({
   const updateTask    = useDataStore((s) => s.updateTask)
   const toggleComplete = useDataStore((s) => s.toggleComplete)
   const deleteTask    = useDataStore((s) => s.deleteTask)
+  const restoreTask   = useDataStore((s) => s.restoreTask)
   const markWontDo    = useDataStore((s) => s.markWontDo)
   const createTask    = useDataStore((s) => s.createTask)
 
@@ -507,45 +509,76 @@ function TaskDetailContent({
         </div>
       </div>
 
+      {/* Footer — shows Restore/Delete for completed tasks, normal actions for active */}
       <div className="flex items-center justify-between px-5 py-2 border-t border-border shrink-0">
-        <span className="flex items-center gap-1.5 text-xs text-text-muted">
-          {task.list ? (
-            <>
-              <ClipboardList className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-              <span className="truncate max-w-40">{task.list.name}</span>
-            </>
-          ) : (
-            <ClipboardList className="h-3.5 w-3.5 shrink-0 opacity-50" strokeWidth={1.75} />
-          )}
-        </span>
-
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            title="Set priority"
-            onClick={cyclePriority}
-            className="icon-btn"
-            style={task.priority !== 'none' ? { color: PRIORITY_COLORS[task.priority] } : undefined}
-          >
-            <Flag
-              className="nav-icon"
-              strokeWidth={1.8}
-              fill={task.priority !== 'none' ? PRIORITY_COLORS[task.priority] : 'none'}
-            />
-          </button>
-          <IconButton icon={MessageSquare} label="Comments" size="sm" />
-          <button
-            type="button"
-            title="More options"
-            className="icon-btn"
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect()
-              setFooterMenu({ x: rect.left, y: rect.top - 10 })
-            }}
-          >
-            <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
-          </button>
-        </div>
+        {isCompleted || isWontDo ? (
+          /* ── Completed / Won't Do footer ── */
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                restoreTask(liveTask.id)
+                toggleComplete(liveTask.id)
+              }}
+              className="flex items-center gap-2 text-[13px] font-medium text-text-secondary hover:text-accent transition-colors"
+            >
+              <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
+              Restore
+            </button>
+            <button
+              type="button"
+              title="Delete permanently"
+              onClick={() => {
+                deleteTask(liveTask.id)
+                setSelectedTaskId(null)
+              }}
+              className="icon-btn text-text-muted hover:text-priority-p1 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+          </>
+        ) : (
+          /* ── Active task footer ── */
+          <>
+            <span className="flex items-center gap-1.5 text-xs text-text-muted">
+              {liveTask.list ? (
+                <>
+                  <ClipboardList className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                  <span className="truncate max-w-40">{liveTask.list.name}</span>
+                </>
+              ) : (
+                <ClipboardList className="h-3.5 w-3.5 shrink-0 opacity-50" strokeWidth={1.75} />
+              )}
+            </span>
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                title="Set priority"
+                onClick={cyclePriority}
+                className="icon-btn"
+                style={liveTask.priority !== 'none' ? { color: PRIORITY_COLORS[liveTask.priority] } : undefined}
+              >
+                <Flag
+                  className="nav-icon"
+                  strokeWidth={1.8}
+                  fill={liveTask.priority !== 'none' ? PRIORITY_COLORS[liveTask.priority] : 'none'}
+                />
+              </button>
+              <IconButton icon={MessageSquare} label="Comments" size="sm" />
+              <button
+                type="button"
+                title="More options"
+                className="icon-btn"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  setFooterMenu({ x: rect.left, y: rect.top - 10 })
+                }}
+              >
+                <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {footerMenu && (
