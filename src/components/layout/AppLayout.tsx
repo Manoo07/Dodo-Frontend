@@ -11,6 +11,7 @@ import SearchModal from './SearchModal'
 import PanelResizer from './PanelResizer'
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { useDefaultListView } from '../../hooks/useDefaultListView'
+import ToastContainer from '../ui/ToastContainer'
 
 export default function AppLayout() {
   const { mobilePane } = useAppStore()
@@ -152,6 +153,7 @@ export default function AppLayout() {
       </div>
 
       <SearchModal />
+      <ToastContainer />
     </div>
   )
 }

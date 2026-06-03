@@ -4,7 +4,8 @@ export interface User {
   name: string
   emailVerified: boolean
   createdAt: string
-  digestHour: number   // UTC hour (0-23) for daily email digest
+  digestHour: number             // local hour (0-23) chosen by user
+  digestTimezoneOffset: number   // raw getTimezoneOffset() in minutes
 }
 
 export type TaskStatus = 'active' | 'completed' | 'wont_do' | 'deleted'

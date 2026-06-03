@@ -28,6 +28,6 @@ export const authApi = {
   resendVerification: (email: string) =>
     client.post<{ message: string }>('/auth/resend-verification', { email }).then((r) => r.data),
 
-  updatePreferences: (prefs: { digestHour?: number }) =>
+  updatePreferences: (prefs: { digestHour?: number; digestTimezoneOffset?: number }) =>
     client.patch<User>('/auth/preferences', prefs).then((r) => r.data),
 }

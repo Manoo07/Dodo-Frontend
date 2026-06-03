@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import SidebarSkeleton from './SidebarSkeleton'
+import { toast } from '../../store/useToastStore'
 import { createPortal } from 'react-dom'
 import {
   Sun,
@@ -196,19 +197,13 @@ function DigestSettingsModal({
   onClose,
 }: {
   currentHour: number
-  onSave: (utcHour: number) => void
+  onSave: (localHour: number, tzOffset: number) => void
   onClose: () => void
 }) {
   const tzOffsetMinutes = new Date().getTimezoneOffset()
 
-  const localToUtc = (localH: number) =>
-    Math.floor((((localH * 60 + tzOffsetMinutes) % 1440) + 1440) % 1440 / 60)
-
-  const utcToLocal = (utcH: number) =>
-    Math.floor((((utcH * 60 - tzOffsetMinutes) % 1440) + 1440) % 1440 / 60)
-
-  const [selected, setSelected] = useState(utcToLocal(currentHour))
-  const utcHour = localToUtc(selected)
+  // digestHour is now stored as LOCAL hour — no conversion needed on load or display
+  const [selected, setSelected] = useState(currentHour)
 
   const hours = Array.from({ length: 24 }, (_, i) => {
     const h12 = i % 12 === 0 ? 12 : i % 12
@@ -281,9 +276,12 @@ function DigestSettingsModal({
           />
         </div>
 
-        {/* UTC hint */}
+        {/* UTC hint — compute for display only */}
         <p className="text-[11.5px] text-text-muted">
-          Stored as <span className="text-text-secondary font-medium">{utcHour.toString().padStart(2, '0')}:00 UTC</span>
+          {(() => {
+            const utc = Math.floor((((selected * 60 + tzOffsetMinutes) % 1440) + 1440) % 1440 / 60)
+            return <>Equivalent to <span className="text-text-secondary font-medium">{utc.toString().padStart(2, '0')}:00 UTC</span></>
+          })()}
         </p>
 
         {/* Buttons */}
@@ -298,7 +296,7 @@ function DigestSettingsModal({
           </button>
           <button
             type="button"
-            onClick={() => onSave(utcHour)}
+            onClick={() => onSave(selected, tzOffsetMinutes)}
             className="flex-1 rounded-xl text-[13.5px] font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
             style={{ height: 42, background: 'var(--color-accent)' }}
           >
@@ -567,7 +565,11 @@ export default function Sidebar() {
       {showDigestSettings && user && (
         <DigestSettingsModal
           currentHour={user.digestHour ?? 18}
-          onSave={(h) => { updatePreferences({ digestHour: h }); setShowDigestSettings(false) }}
+          onSave={(localHour, tzOffset) => {
+            updatePreferences({ digestHour: localHour, digestTimezoneOffset: tzOffset })
+            setShowDigestSettings(false)
+            toast.success('Digest time updated! You\'ll receive emails at your chosen time.')
+          }}
           onClose={() => setShowDigestSettings(false)}
         />
       )}

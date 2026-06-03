@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { authApi } from '../api/auth'
+import { toast } from './useToastStore'
 import type { User } from '../types'
 
 const TOKEN_KEY = 'dodo_token'
@@ -22,7 +23,7 @@ interface AuthState {
   resetPassword: (token: string, password: string) => Promise<string>
   verifyEmail: (email: string, otp: string) => Promise<void>
   resendVerification: (email: string) => Promise<string>
-  updatePreferences: (prefs: { digestHour?: number }) => Promise<void>
+  updatePreferences: (prefs: { digestHour?: number; digestTimezoneOffset?: number }) => Promise<void>
   setAuthPage: (page: AuthPage) => void
   clearError: () => void
 }
@@ -149,6 +150,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ user: updated })
     } catch (err) {
       set({ error: apiError(err) })
+      toast.error('Failed to save preferences')
     }
   },
 
