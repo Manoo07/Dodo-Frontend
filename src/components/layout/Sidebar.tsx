@@ -9,7 +9,6 @@ import {
   Plus,
   CheckCircle2,
   Trash2,
-  Filter,
   Tag,
   ChevronRight,
   Folder,
@@ -444,21 +443,12 @@ export default function Sidebar() {
             )}
           </SidebarSection>
 
-          <SidebarDivider />
-
-          <SidebarSection label="Filters" icon={Filter} className="pt-3 pb-2">
-            <SidebarHint>Filter tasks by list, date, priority, tag, and more.</SidebarHint>
-          </SidebarSection>
-
+          {tags.length > 0 && (
+          <>
           <SidebarDivider />
 
           <SidebarSection label="Tags" icon={Tag} className="pt-3 pb-3">
-            {tags.length === 0 ? (
-              <SidebarHint>
-                Type <span className="font-mono text-text-secondary">#</span> when adding a task to
-                assign tags.
-              </SidebarHint>
-            ) : (
+            {(
               <div className="space-y-0.5">
                 {tags.map((tag) => {
                   const count = tagTaskCounts[tag.id] ?? 0
@@ -484,6 +474,8 @@ export default function Sidebar() {
               </div>
             )}
           </SidebarSection>
+          </>
+          )}
 
         </div>
 
