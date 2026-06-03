@@ -34,7 +34,6 @@ const PRIORITY_COLORS: Record<Priority, string> = {
   none: 'var(--color-priority-p4)',
 }
 
-const PRIORITY_CYCLE: Priority[] = ['none', 'p1', 'p2', 'p3']
 
 function buildBreadcrumb(taskId: string): { id: string; title: string }[] {
   const tasks = useDataStore.getState().tasks
