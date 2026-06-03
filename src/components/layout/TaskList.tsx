@@ -106,21 +106,15 @@ export default function TaskList() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } }),
   )
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  // Show skeleton until data is ready — placed after ALL hooks
-  if (!hydrated) return <TaskListSkeleton />
-
-  const isListView = selectedView === 'list' && selectedListId && !selectedTagId
-  const isTrashView = selectedView === 'trash' && !selectedTagId
+  // ── Computed values needed by useMemo / useEffect ─────────────────────────
+  const isListView      = !!(selectedView === 'list' && selectedListId && !selectedTagId)
+  const isTrashView     = selectedView === 'trash' && !selectedTagId
   const isCompletedView = selectedView === 'completed' && !selectedTagId
-  const isInboxView = selectedView === 'inbox' && !selectedTagId
-  const canAddTasks = isListView || isInboxView
+  const isInboxView     = selectedView === 'inbox' && !selectedTagId
+  const canAddTasks     = isListView || isInboxView
 
-  const inboxList = lists.find((l) => l.name.toLowerCase() === 'inbox')
-  const listInfo = selectedListId ? getListById(selectedListId) : undefined
-  const tagInfo = tags.find((t) => t.id === selectedTagId)
-
+  // ── useMemo / useEffect MUST be before any early return ───────────────────
   const tasks = useMemo(
     () => getTasksForView(selectedView, selectedListId, selectedTagId),
     [getTasksForView, selectedView, selectedListId, selectedTagId, tasksFlat],
@@ -152,6 +146,14 @@ export default function TaskList() {
       })
     }
   }, [sections.length, selectedListId])
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Skeleton — placed after every single hook in this component
+  if (!hydrated) return <TaskListSkeleton />
+
+  const inboxList = lists.find((l) => l.name.toLowerCase() === 'inbox')
+  const listInfo  = selectedListId ? getListById(selectedListId) : undefined
+  const tagInfo   = tags.find((t) => t.id === selectedTagId)
 
   function handleToggleExpand(id: string) {
     setExpandedIds((prev) => {
