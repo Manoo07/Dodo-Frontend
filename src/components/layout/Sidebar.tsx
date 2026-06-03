@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom'
 import {
   Sun,
   CalendarRange,
-  Inbox,
   Plus,
   CheckCircle2,
   Trash2,
@@ -29,7 +28,6 @@ import type { Folder as FolderType, List, NavView } from '../../types'
 const NAV_ITEMS: { view: NavView; label: string; icon: LucideIcon }[] = [
   { view: 'today', label: 'Today', icon: Sun },
   { view: 'next7days', label: 'Next 7 Days', icon: CalendarRange },
-  { view: 'inbox', label: 'Inbox', icon: Inbox },
 ]
 
 function NavButton({
