@@ -120,9 +120,9 @@ function TaskDetailContent({
   const detailNotesHeight = useLayoutStore((s) => s.detailNotesHeight)
   const setDetailNotesHeight = useLayoutStore((s) => s.setDetailNotesHeight)
 
-  // Re-read live task data (children, tags, etc.) — but use local state for editing fields
-  const getTaskWithTree = useDataStore((s) => s.getTaskWithTree)
-  const liveTask = getTaskWithTree(task.id) ?? task
+  // Subscribe to tasks directly so any change (delete subtask, toggle, etc.)
+  // triggers a re-render and liveTask.children updates immediately without refresh
+  const liveTask = useDataStore((s) => s.getTaskWithTree(task.id) ?? task)
   const breadcrumb = buildBreadcrumb(task.id)
 
   useEffect(() => {
