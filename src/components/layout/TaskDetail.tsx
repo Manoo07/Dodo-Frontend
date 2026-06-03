@@ -410,7 +410,7 @@ function TaskDetailContent({
             <h3 className="subtask-section-header">Subtasks</h3>
             {(task.children && task.children.length > 0) || addingSubtask ? (
               <>
-                <ul className="space-y-0.5 relative">
+                <ul className="space-y-1 relative">
                   {/* Vertical connector line at checkbox column */}
                   {task.children && task.children.length > 0 && (
                     <div
