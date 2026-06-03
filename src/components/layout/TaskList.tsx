@@ -125,13 +125,21 @@ export default function TaskList() {
     [getSectionsByList, selectedListId, isListView, tasksFlat],
   )
 
+  // Always-current ref so the effect can read tasks without depending on them.
+  // Removing `tasks` from the dep array means this only fires on view/list change,
+  // NOT when individual task data changes (patchTaskLocal, optimistic updates, etc.)
+  // which previously caused the expanded tree to collapse every keystroke.
+  const tasksRef = useRef(tasks)
+  tasksRef.current = tasks
+
   useEffect(() => {
     const ids = new Set<string>()
-    for (const task of tasks) {
+    for (const task of tasksRef.current) {
       if (task.children?.length) ids.add(task.id)
     }
     setExpandedIds(ids)
-  }, [selectedView, selectedListId, selectedTagId, tasks])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedView, selectedListId, selectedTagId])
 
   useEffect(() => {
     if (sections.length > 0) {
