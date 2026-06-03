@@ -141,7 +141,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
         hydrated: false,
         error: apiErrorMessage(err),
       })
-    }
+    } 
   },
 
   clearError: () => set({ error: null }),

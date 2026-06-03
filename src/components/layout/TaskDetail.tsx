@@ -410,7 +410,14 @@ function TaskDetailContent({
             <h3 className="subtask-section-header">Subtasks</h3>
             {(task.children && task.children.length > 0) || addingSubtask ? (
               <>
-                <ul className="space-y-0.5">
+                <ul className="space-y-0.5 relative">
+                  {/* Vertical connector line at checkbox column */}
+                  {task.children && task.children.length > 0 && (
+                    <div
+                      className="absolute top-0 bottom-0 pointer-events-none"
+                      style={{ left: 6, width: 1, background: 'rgba(255,255,255,0.08)' }}
+                    />
+                  )}
                   {task.children?.map((child) => (
                     <li key={child.id}>
                       {editingSubtaskId === child.id ? (

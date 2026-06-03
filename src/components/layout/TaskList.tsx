@@ -319,11 +319,20 @@ export default function TaskList() {
             {doneTasks.map((task) => (
               <div key={task.id}>
                 {renderTaskItem(task, depth)}
-                {task.children && expandedIds.has(task.id) &&
-                  flattenTree(task.children, depth + 1, expandedIds).map(({ task: child, depth: d }) =>
-                    renderTaskItem(child, d)
+                {task.children && expandedIds.has(task.id) && (() => {
+                  const lineLeft = 10 + depth * 20 + 8   // center of this depth's chevron
+                  return (
+                    <div className="relative">
+                      <div
+                        className="absolute top-0 bottom-0 pointer-events-none"
+                        style={{ left: lineLeft, width: 1, background: 'rgba(255,255,255,0.08)' }}
+                      />
+                      {flattenTree(task.children, depth + 1, expandedIds).map(({ task: child, depth: d }) =>
+                        renderTaskItem(child, d)
+                      )}
+                    </div>
                   )
-                }
+                })()}
               </div>
             ))}
           </div>
@@ -356,11 +365,17 @@ export default function TaskList() {
                       const flat = flattenTree(task.children, 1, expandedIds)
                       const activeChildren = flat.filter(({ task: c }) => c.status === 'active')
                       const doneChildren   = flat.filter(({ task: c }) => c.status !== 'active')
+                      const lineLeft = 18  // center of depth-0 expand chevron (paddingLeft 10 + half of 16px icon)
                       return (
-                        <>
+                        <div className="relative">
+                          {/* Vertical connector line */}
+                          <div
+                            className="absolute top-0 bottom-0 pointer-events-none"
+                            style={{ left: lineLeft, width: 1, background: 'rgba(255,255,255,0.08)' }}
+                          />
                           {activeChildren.map(({ task: child, depth }) => renderTaskItem(child, depth))}
                           {renderCompletedStrip(doneChildren.map((x) => x.task), `${task.id}_children`, 1)}
-                        </>
+                        </div>
                       )
                     })()}
                   </>

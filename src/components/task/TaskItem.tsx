@@ -137,6 +137,7 @@ export default function TaskItem({
         <TaskCheckbox
           checked={isCompleted}
           priority={task.priority}
+          size={depth > 0 ? 'sm' : 'md'}
           onClick={(e) => {
             e.stopPropagation()
             onToggleComplete(task.id)
