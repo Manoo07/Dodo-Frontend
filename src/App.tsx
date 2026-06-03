@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from './store/useAuthStore'
-import { useDataStore } from './store/useDataStore'
 import AppLayout from './components/layout/AppLayout'
 import AuthPage from './pages/AuthPage'
 
@@ -59,7 +58,6 @@ function LoadingScreen({ complete }: { complete: boolean }) {
 
 export default function App() {
   const { token, user, loading: authLoading, checkAuth } = useAuthStore()
-  const { hydrate, loading: dataLoading, hydrated } = useDataStore()
 
   // Whether all async initialization is done
   const [initDone, setInitDone] = useState(false)
@@ -76,22 +74,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  // Step 2 — once user is verified, load app data
+  // Step 2 — mark initDone as soon as auth check finishes
+  // Data loading happens inside AppLayout with skeleton loaders
   useEffect(() => {
-    if (user && !hydrated && !dataLoading) {
-      void hydrate()
-    }
-  }, [user, hydrated, dataLoading, hydrate])
-
-  // Step 3 — mark init done when everything is loaded OR when no login needed
-  useEffect(() => {
-    const authDone = !authLoading
-    const dataDone = !dataLoading && (hydrated || !user)
-
-    if (authDone && dataDone) {
+    if (!authLoading) {
       setInitDone(true)
     }
-  }, [authLoading, dataLoading, hydrated, user])
+  }, [authLoading])
 
   // Step 4 — wait 350ms after initDone so bar visibly reaches 100%
   useEffect(() => {

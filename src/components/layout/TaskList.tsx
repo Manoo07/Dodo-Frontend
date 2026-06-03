@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown } from 'lucide-react'
+import TaskListSkeleton from './TaskListSkeleton'
 import {
   DndContext,
   DragOverlay,
@@ -90,6 +91,9 @@ export default function TaskList() {
   const markWontDo = useDataStore((s) => s.markWontDo)
   const toggleSection = useDataStore((s) => s.toggleSection)
   const reorderTask = useDataStore((s) => s.reorderTask)
+  const hydrated = useDataStore((s) => s.hydrated)
+
+  if (!hydrated) return <TaskListSkeleton />
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['__unsectioned']))

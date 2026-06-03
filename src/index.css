@@ -1284,3 +1284,25 @@ body,
   /* List title */
   .list-panel-title { font-size: 15px; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Skeleton loader shimmer
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes sk-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+.sk {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 1200px 100%;
+  animation: sk-shimmer 1.6s ease-in-out infinite;
+}

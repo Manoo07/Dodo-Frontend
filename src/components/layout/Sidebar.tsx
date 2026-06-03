@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import SidebarSkeleton from './SidebarSkeleton'
 import { createPortal } from 'react-dom'
 import {
   Sun,
@@ -186,6 +187,8 @@ function FolderGroup({
 }
 
 export default function Sidebar() {
+  const hydrated = useDataStore((s) => s.hydrated)
+
   const {
     selectedView,
     selectedListId,
@@ -239,6 +242,8 @@ export default function Sidebar() {
 
   const isNavActive = (view: NavView) =>
     selectedView === view && !selectedListId && !selectedTagId
+
+  if (!hydrated) return <><SidebarSkeleton /><AddListModal open={false} onClose={() => {}} /></>
 
   return (
     <>

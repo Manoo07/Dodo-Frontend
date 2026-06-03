@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import TaskDetailSkeleton from './TaskDetailSkeleton'
 import {
   ChevronRight,
   Calendar,
@@ -52,7 +53,10 @@ function buildBreadcrumb(taskId: string): { id: string; title: string }[] {
 export default function TaskDetail() {
   const { selectedTaskId, setMobilePane } = useAppStore()
   const getTaskWithTree = useDataStore((s) => s.getTaskWithTree)
+  const hydrated = useDataStore((s) => s.hydrated)
   const task = selectedTaskId ? getTaskWithTree(selectedTaskId) : undefined
+
+  if (!hydrated) return <TaskDetailSkeleton />
 
   if (!selectedTaskId) {
     return (
