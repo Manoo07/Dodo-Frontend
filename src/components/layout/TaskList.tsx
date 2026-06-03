@@ -93,22 +93,23 @@ export default function TaskList() {
   const reorderTask = useDataStore((s) => s.reorderTask)
   const hydrated = useDataStore((s) => s.hydrated)
 
-  if (!hydrated) return <TaskListSkeleton />
-
+  // ── All useState / useSensors MUST come before any early return ──────────────
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['__unsectioned']))
   const [showViewMenu, setShowViewMenu] = useState(false)
   const [showAddSection, setShowAddSection] = useState(false)
   const [addingSubtaskFor, setAddingSubtaskFor] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
-  // Which groups have their "N completed" sub-section expanded
   const [completedExpanded, setCompletedExpanded] = useState<Set<string>>(new Set())
 
-  // Require 8px movement before drag starts so clicks still work
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } }),
   )
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Show skeleton until data is ready — placed after ALL hooks
+  if (!hydrated) return <TaskListSkeleton />
 
   const isListView = selectedView === 'list' && selectedListId && !selectedTagId
   const isTrashView = selectedView === 'trash' && !selectedTagId
