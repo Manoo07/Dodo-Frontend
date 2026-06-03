@@ -188,9 +188,9 @@ function FolderGroup({
   )
 }
 
-// ── Digest time settings ──────────────────────────────────────────────────────
+// ── Digest time settings — centered portal dialog ─────────────────────────────
 
-function DigestSettings({
+function DigestSettingsModal({
   currentHour,
   onSave,
   onClose,
@@ -199,8 +199,6 @@ function DigestSettings({
   onSave: (utcHour: number) => void
   onClose: () => void
 }) {
-  // Use getTimezoneOffset() — stable per-render, no new Date() inside conversion
-  // getTimezoneOffset() = (UTC - local) in minutes, e.g. UTC+5:30 → -330
   const tzOffsetMinutes = new Date().getTimezoneOffset()
 
   const localToUtc = (localH: number) =>
@@ -210,8 +208,6 @@ function DigestSettings({
     Math.floor((((utcH * 60 - tzOffsetMinutes) % 1440) + 1440) % 1440 / 60)
 
   const [selected, setSelected] = useState(utcToLocal(currentHour))
-
-  // Compute ONCE per render — same value used for both the preview text and the save
   const utcHour = localToUtc(selected)
 
   const hours = Array.from({ length: 24 }, (_, i) => {
@@ -220,71 +216,99 @@ function DigestSettings({
     return { value: i, label: `${h12}:00 ${ampm}` }
   })
 
-  return (
+  return createPortal(
     <div
-      className="rounded-xl mt-1"
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        padding: '12px 14px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.6)', padding: 20 }}
+      onClick={onClose}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Bell className="h-3.5 w-3.5 text-accent shrink-0" strokeWidth={1.75} />
-        <p className="text-[12.5px] font-semibold text-text-primary">Daily email digest</p>
-      </div>
-      <p className="text-[11.5px] text-text-muted leading-relaxed">
-        Send me a summary of pending tasks every day at:
-      </p>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: 360,
+          background: '#1e1e22',
+          border: '1px solid rgba(91,155,213,0.25)',
+          borderRadius: 18,
+          padding: '28px 24px 22px',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(91,155,213,0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
+        {/* Icon */}
+        <div style={{
+          width: 52, height: 52, borderRadius: '50%',
+          background: 'rgba(91,155,213,0.12)',
+          border: '1px solid rgba(91,155,213,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Bell style={{ width: 22, height: 22, color: 'var(--color-accent)' }} strokeWidth={1.75} />
+        </div>
 
-      {/* Hour picker */}
-      <div className="relative">
-        <select
-          value={selected}
-          onChange={(e) => setSelected(Number(e.target.value))}
-          className="w-full rounded-lg text-[13px] text-text-primary outline-none appearance-none"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            height: 34,
-            padding: '0 12px',
-          }}
-        >
-          {hours.map((h) => (
-            <option key={h.value} value={h.value}>{h.label}</option>
-          ))}
-        </select>
-        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-text-muted rotate-90 pointer-events-none" strokeWidth={1.75} />
-      </div>
+        {/* Title + desc */}
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <p className="text-[16px] font-semibold text-text-primary">Daily email digest</p>
+          <p className="text-[13px] text-text-muted leading-relaxed">
+            Receive a summary of your pending tasks every day at your preferred time.
+          </p>
+        </div>
 
-      <p className="text-[11px] text-text-muted">
-        Your local time · stored as {utcHour.toString().padStart(2, '0')}:00 UTC
-      </p>
+        {/* Hour picker */}
+        <div style={{ width: '100%', position: 'relative' }}>
+          <select
+            value={selected}
+            onChange={(e) => setSelected(Number(e.target.value))}
+            className="w-full text-[14px] text-text-primary outline-none appearance-none"
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              border: '2px solid rgba(91,155,213,0.3)',
+              borderRadius: 12,
+              height: 44,
+              padding: '0 16px',
+            }}
+          >
+            {hours.map((h) => (
+              <option key={h.value} value={h.value}>{h.label}</option>
+            ))}
+          </select>
+          <ChevronRight
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none rotate-90"
+            style={{ width: 16, height: 16, color: 'var(--color-text-muted)' }}
+            strokeWidth={1.75}
+          />
+        </div>
 
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex-1 rounded-lg text-[12.5px] font-medium text-text-muted transition-colors hover:text-text-primary"
-          style={{ height: 30, background: 'rgba(255,255,255,0.05)' }}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={() => onSave(utcHour)}
-          className="flex-1 rounded-lg text-[12.5px] font-semibold text-white flex items-center justify-center gap-1.5 transition-colors hover:opacity-90"
-          style={{ height: 30, background: 'var(--color-accent)' }}
-        >
-          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Save
-        </button>
+        {/* UTC hint */}
+        <p className="text-[11.5px] text-text-muted">
+          Stored as <span className="text-text-secondary font-medium">{utcHour.toString().padStart(2, '0')}:00 UTC</span>
+        </p>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: 10, width: '100%', marginTop: 4 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-xl text-[13.5px] font-medium text-text-secondary transition-colors hover:text-text-primary"
+            style={{ height: 42, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave(utcHour)}
+            className="flex-1 rounded-xl text-[13.5px] font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ height: 42, background: 'var(--color-accent)' }}
+          >
+            <Check style={{ width: 15, height: 15 }} strokeWidth={2.5} />
+            Save
+          </button>
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -531,14 +555,6 @@ export default function Sidebar() {
                 </button>
               </div>
 
-              {/* Digest time picker */}
-              {showDigestSettings && (
-                <DigestSettings
-                  currentHour={user.digestHour ?? 18}
-                  onSave={(h) => { updatePreferences({ digestHour: h }); setShowDigestSettings(false) }}
-                  onClose={() => setShowDigestSettings(false)}
-                />
-              )}
             </div>
           )}
         </div>
@@ -546,6 +562,15 @@ export default function Sidebar() {
       </aside>
 
       <AddListModal open={showAddList} onClose={() => setShowAddList(false)} />
+
+      {/* ── Digest settings modal ── */}
+      {showDigestSettings && user && (
+        <DigestSettingsModal
+          currentHour={user.digestHour ?? 18}
+          onSave={(h) => { updatePreferences({ digestHour: h }); setShowDigestSettings(false) }}
+          onClose={() => setShowDigestSettings(false)}
+        />
+      )}
 
       {/* ── Centered sign-out confirmation modal ── */}
       {confirmLogout && user && createPortal(
