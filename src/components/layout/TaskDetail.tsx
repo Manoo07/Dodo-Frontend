@@ -112,7 +112,7 @@ function TaskDetailContent({
   const [editingSubtaskTitle, setEditingSubtaskTitle] = useState('')
   const [footerMenu, setFooterMenu] = useState<{ x: number; y: number } | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [showPriorityPicker, setShowPriorityPicker] = useState(false)
+  const [priorityAnchor, setPriorityAnchor] = useState<'toolbar' | 'footer' | null>(null)
   const titleRef = useRef<HTMLTextAreaElement>(null)
   const titleApiTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const saveDescriptionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -352,7 +352,7 @@ function TaskDetailContent({
           <button
             type="button"
             title="Set priority"
-            onClick={() => setShowPriorityPicker((v) => !v)}
+            onClick={() => setPriorityAnchor((v) => v === 'toolbar' ? null : 'toolbar')}
             className="icon-btn"
             style={liveTask.priority !== 'none' ? { color: PRIORITY_COLORS[liveTask.priority] } : undefined}
           >
@@ -362,12 +362,12 @@ function TaskDetailContent({
               fill={liveTask.priority !== 'none' ? PRIORITY_COLORS[liveTask.priority] : 'none'}
             />
           </button>
-          {showPriorityPicker && (
+          {priorityAnchor === 'toolbar' && (
             <div className="absolute right-0 top-full mt-2 z-50">
               <PriorityPicker
                 value={liveTask.priority}
-                onChange={(p) => updateTask(task.id, { priority: p })}
-                onClose={() => setShowPriorityPicker(false)}
+                onChange={(p) => { updateTask(task.id, { priority: p }); setPriorityAnchor(null) }}
+                onClose={() => setPriorityAnchor(null)}
               />
             </div>
           )}
@@ -607,7 +607,7 @@ function TaskDetailContent({
                 <button
                   type="button"
                   title="Set priority"
-                  onClick={() => setShowPriorityPicker((v) => !v)}
+                  onClick={() => setPriorityAnchor((v) => v === 'footer' ? null : 'footer')}
                   className="icon-btn"
                   style={liveTask.priority !== 'none' ? { color: PRIORITY_COLORS[liveTask.priority] } : undefined}
                 >
@@ -617,12 +617,12 @@ function TaskDetailContent({
                     fill={liveTask.priority !== 'none' ? PRIORITY_COLORS[liveTask.priority] : 'none'}
                   />
                 </button>
-                {showPriorityPicker && (
+                {priorityAnchor === 'footer' && (
                   <div className="absolute right-0 bottom-full mb-2 z-50">
                     <PriorityPicker
                       value={liveTask.priority}
-                      onChange={(p) => updateTask(task.id, { priority: p })}
-                      onClose={() => setShowPriorityPicker(false)}
+                      onChange={(p) => { updateTask(task.id, { priority: p }); setPriorityAnchor(null) }}
+                      onClose={() => setPriorityAnchor(null)}
                     />
                   </div>
                 )}
