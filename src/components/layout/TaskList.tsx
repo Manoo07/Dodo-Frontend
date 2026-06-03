@@ -275,7 +275,7 @@ export default function TaskList() {
   }
 
   /** Collapsible "N completed" strip shown at the bottom of each group */
-  function renderCompletedStrip(doneTasks: Task[], groupKey: string) {
+  function renderCompletedStrip(doneTasks: Task[], groupKey: string, depth = 0) {
     if (doneTasks.length === 0 || isTrashView || isCompletedView) return null
     const open = completedExpanded.has(groupKey)
 
@@ -316,15 +316,15 @@ export default function TaskList() {
           <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
         </button>
 
-        {/* Completed task rows */}
+        {/* Completed task rows — render at the given depth */}
         {open && (
           <div style={{ opacity: 0.65 }}>
             {doneTasks.map((task) => (
               <div key={task.id}>
-                {renderTaskItem(task, 0)}
+                {renderTaskItem(task, depth)}
                 {task.children && expandedIds.has(task.id) &&
-                  flattenTree(task.children, 1, expandedIds).map(({ task: child, depth }) =>
-                    renderTaskItem(child, depth)
+                  flattenTree(task.children, depth + 1, expandedIds).map(({ task: child, depth: d }) =>
+                    renderTaskItem(child, d)
                   )
                 }
               </div>
@@ -355,11 +355,17 @@ export default function TaskList() {
                 {(handleProps) => (
                   <>
                     {renderTaskItem(task, 0, handleProps)}
-                    {task.children && expandedIds.has(task.id) &&
-                      flattenTree(task.children, 1, expandedIds).map(({ task: child, depth }) =>
-                        renderTaskItem(child, depth)
+                    {task.children && expandedIds.has(task.id) && (() => {
+                      const flat = flattenTree(task.children, 1, expandedIds)
+                      const activeChildren = flat.filter(({ task: c }) => c.status === 'active')
+                      const doneChildren   = flat.filter(({ task: c }) => c.status !== 'active')
+                      return (
+                        <>
+                          {activeChildren.map(({ task: child, depth }) => renderTaskItem(child, depth))}
+                          {renderCompletedStrip(doneChildren.map((x) => x.task), `${task.id}_children`, 1)}
+                        </>
                       )
-                    }
+                    })()}
                   </>
                 )}
               </SortableItem>
