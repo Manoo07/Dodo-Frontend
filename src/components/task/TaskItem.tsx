@@ -29,6 +29,8 @@ interface Props {
   onPin?: (id: string, isPinned: boolean) => void
   onSetDate?: (id: string, date: string | null) => void
   onSetPriority?: (id: string, priority: import('../../types').Priority) => void
+  onMoveToSection?: (id: string, sectionId: string | null) => void
+  sections?: { id: string; name: string }[]
   dragHandleProps?: Record<string, unknown>
 }
 
@@ -48,6 +50,8 @@ export default function TaskItem({
   onPin,
   onSetDate,
   onSetPriority,
+  onMoveToSection,
+  sections,
   dragHandleProps,
 }: Props) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
@@ -94,6 +98,9 @@ export default function TaskItem({
     onPin: onPin ? () => onPin(task.id, task.isPinned) : undefined,
     isPinned: task.isPinned,
     isTrash: !!onRestore,
+    sections,
+    currentSectionId: task.sectionId,
+    onMoveTo: onMoveToSection ? (sectionId) => onMoveToSection(task.id, sectionId) : undefined,
   })
 
   return (

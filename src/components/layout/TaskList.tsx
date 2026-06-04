@@ -273,6 +273,8 @@ export default function TaskList() {
           onPin={isTrashView || isCompletedView ? undefined : handlePin}
           onSetDate={isTrashView || isCompletedView ? undefined : (id, date) => updateTask(id, { dueDate: date })}
           onSetPriority={isTrashView || isCompletedView ? undefined : (id, priority) => updateTask(id, { priority })}
+          onMoveToSection={isListView && !isTrashView && !isCompletedView ? (id, sectionId) => updateTask(id, { sectionId }) : undefined}
+          sections={isListView ? sections : undefined}
           dragHandleProps={dragHandleProps}
         />
         {addingSubtaskFor === task.id && isListView && (

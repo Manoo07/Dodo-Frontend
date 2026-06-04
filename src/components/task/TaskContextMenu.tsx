@@ -1,14 +1,21 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Sun,
   Sunrise,
   CalendarDays,
   X,
   Flag,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import type { Priority } from '../../types'
+
+export interface SubmenuItem {
+  label: string
+  onClick: () => void
+  muted?: boolean
+}
 
 export interface MenuItem {
   label: string
@@ -16,8 +23,8 @@ export interface MenuItem {
   onClick: () => void
   destructive?: boolean
   dividerBefore?: boolean
-  hasSubmenu?: boolean
   disabled?: boolean
+  submenuItems?: SubmenuItem[]
 }
 
 interface TaskContextMenuProps {
@@ -120,10 +127,16 @@ export default function TaskContextMenu({
   x, y, items, onClose, task, onSetDate, onSetPriority,
 }: TaskContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const submenuRef = useRef<HTMLDivElement>(null)
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null)
+  const [submenuPos, setSubmenuPos] = useState({ top: 0, left: 0 })
+  const submenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+      const inMain    = ref.current?.contains(e.target as Node)
+      const inSubmenu = submenuRef.current?.contains(e.target as Node)
+      if (!inMain && !inSubmenu) onClose()
     }
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -135,6 +148,24 @@ export default function TaskContextMenu({
       document.removeEventListener('keydown', handleKey)
     }
   }, [onClose])
+
+  function openSubmenuFor(label: string, el: HTMLElement) {
+    if (submenuTimer.current) clearTimeout(submenuTimer.current)
+    const rect = el.getBoundingClientRect()
+    const submenuW = 200
+    const spaceRight = window.innerWidth - (left + menuW + 4)
+    const submenuLeft = spaceRight >= submenuW ? left + menuW + 4 : left - submenuW - 4
+    setSubmenuPos({ top: rect.top, left: submenuLeft })
+    setOpenSubmenu(label)
+  }
+
+  function scheduleCloseSubmenu() {
+    submenuTimer.current = setTimeout(() => setOpenSubmenu(null), 150)
+  }
+
+  function cancelCloseSubmenu() {
+    if (submenuTimer.current) clearTimeout(submenuTimer.current)
+  }
 
   const activeItems = items.filter((i) => !i.disabled)
   const menuW = 260
@@ -202,6 +233,7 @@ export default function TaskContextMenu({
       <div style={{ padding: '6px 6px' }}>
         {activeItems.map((item) => {
           const Icon = item.icon
+          const hasSubmenu = !!(item.submenuItems && item.submenuItems.length > 0)
           return (
             <div key={item.label}>
               {item.dividerBefore && (
@@ -209,12 +241,20 @@ export default function TaskContextMenu({
               )}
               <button
                 type="button"
-                onClick={() => { item.onClick(); onClose() }}
+                onClick={() => {
+                  if (!hasSubmenu) { item.onClick(); onClose() }
+                }}
+                onMouseEnter={(e) => {
+                  if (hasSubmenu) openSubmenuFor(item.label, e.currentTarget)
+                  else { if (submenuTimer.current) clearTimeout(submenuTimer.current); setOpenSubmenu(null) }
+                }}
+                onMouseLeave={() => { if (hasSubmenu) scheduleCloseSubmenu() }}
                 className={cn(
                   'w-full flex items-center gap-3 rounded-lg text-[13.5px] font-medium text-left transition-colors',
                   item.destructive
                     ? 'text-priority-p1 hover:bg-priority-p1/10'
                     : 'text-text-primary hover:bg-white/6',
+                  openSubmenu === item.label && !item.destructive && 'bg-white/6',
                 )}
                 style={{ padding: '9px 12px' }}
               >
@@ -225,11 +265,53 @@ export default function TaskContextMenu({
                   />
                 )}
                 <span className="flex-1">{item.label}</span>
+                {hasSubmenu && (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-muted" strokeWidth={1.75} />
+                )}
               </button>
             </div>
           )
         })}
       </div>
+
+      {/* ── Submenu flyout ── */}
+      {openSubmenu && (() => {
+        const parent = activeItems.find((i) => i.label === openSubmenu)
+        if (!parent?.submenuItems?.length) return null
+        return (
+          <div
+            ref={submenuRef}
+            className="fixed z-[60]"
+            style={{
+              top: Math.min(submenuPos.top, window.innerHeight - parent.submenuItems.length * 40 - 20),
+              left: submenuPos.left,
+              width: 200,
+              background: '#1e1e22',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.55)',
+              padding: '6px 6px',
+            }}
+            onMouseEnter={cancelCloseSubmenu}
+            onMouseLeave={scheduleCloseSubmenu}
+          >
+            {parent.submenuItems.map((sub) => (
+              <button
+                key={sub.label}
+                type="button"
+                onClick={() => { sub.onClick(); onClose() }}
+                className="w-full flex items-center gap-2 rounded-lg text-[13px] font-medium text-left transition-colors hover:bg-white/6"
+                style={{
+                  padding: '8px 12px',
+                  color: sub.muted ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                }}
+              >
+                {sub.label}
+              </button>
+            ))}
+          </div>
+        )
+      })()}
     </div>
   )
 }
