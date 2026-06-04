@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown } from 'lucide-react'
 import TaskListSkeleton from './TaskListSkeleton'
 import {
@@ -128,35 +128,35 @@ export default function TaskList() {
     [getSectionsByList, selectedListId, isListView, tasksFlat],
   )
 
-  // Always-current ref so the effect can read tasks without depending on them.
-  // Removing `tasks` from the dep array means this only fires on view/list change,
-  // NOT when individual task data changes (patchTaskLocal, optimistic updates, etc.)
-  // which previously caused the expanded tree to collapse every keystroke.
-  const tasksRef = useRef(tasks)
-  tasksRef.current = tasks
+  // ── Render-phase derived state (avoids cascading renders from setState-in-effect) ──
+  // React re-renders immediately when setState is called during render, so there's
+  // no extra paint cycle — unlike useEffect which always runs after the first paint.
 
-  useEffect(() => {
+  const navKey = `${selectedView}:${selectedListId ?? ''}:${selectedTagId ?? ''}`
+  const [prevNavKey, setPrevNavKey] = useState(navKey)
+  if (navKey !== prevNavKey) {
+    setPrevNavKey(navKey)
     const ids = new Set<string>()
-    for (const task of tasksRef.current) {
+    for (const task of tasks) {
       if (task.children?.length) ids.add(task.id)
     }
     setExpandedIds(ids)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedView, selectedListId, selectedTagId])
+  }
 
-  useEffect(() => {
-    if (sections.length > 0) {
-      setExpandedSections((prev) => {
-        const next = new Set(prev)
-        next.add('__unsectioned')
-        sections.forEach((s) => {
-          if (!s.collapsed) next.add(s.id)
-          else next.delete(s.id)
-        })
-        return next
+  const sectionsKey = `${selectedListId ?? ''}:${sections.length}`
+  const [prevSectionsKey, setPrevSectionsKey] = useState(sectionsKey)
+  if (sectionsKey !== prevSectionsKey && sections.length > 0) {
+    setPrevSectionsKey(sectionsKey)
+    setExpandedSections((prev) => {
+      const next = new Set(prev)
+      next.add('__unsectioned')
+      sections.forEach((s) => {
+        if (!s.collapsed) next.add(s.id)
+        else next.delete(s.id)
       })
-    }
-  }, [sections.length, selectedListId])
+      return next
+    })
+  }
   // ─────────────────────────────────────────────────────────────────────────
 
   // Skeleton — placed after every single hook in this component
