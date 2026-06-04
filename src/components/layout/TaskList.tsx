@@ -453,10 +453,22 @@ export default function TaskList() {
     )
   }
 
-  /** Non-DnD flat render (for non-list views) */
+  /** Non-DnD flat render (for non-list views) — active tasks first, completed collapsed at bottom */
   function renderTaskRows(groupTasks: Task[], baseDepth = 0) {
-    return flattenTree(groupTasks, baseDepth, expandedIds).map(({ task, depth }) =>
-      renderTaskItem(task, depth)
+    if (isTrashView || isCompletedView) {
+      return flattenTree(groupTasks, baseDepth, expandedIds).map(({ task, depth }) =>
+        renderTaskItem(task, depth)
+      )
+    }
+    const activeTasks    = groupTasks.filter((t) => t.status === 'active')
+    const completedTasks = groupTasks.filter((t) => t.status !== 'active')
+    return (
+      <>
+        {flattenTree(activeTasks, baseDepth, expandedIds).map(({ task, depth }) =>
+          renderTaskItem(task, depth)
+        )}
+        {renderCompletedStrip(completedTasks, '__flat_view')}
+      </>
     )
   }
 
