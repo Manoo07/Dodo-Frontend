@@ -70,6 +70,9 @@ interface DataState {
   updateList: (id: string, p: Partial<Pick<List, 'name' | 'icon' | 'color' | 'folderId' | 'order'>>) => void
   deleteList: (id: string) => void
   createSection: (p: { name: string; listId: string }) => Section
+  updateSection: (id: string, p: { name?: string; order?: number }) => void
+  deleteSection: (id: string) => void
+  reorderSection: (id: string, newOrder: number) => void
   getSectionsByList: (listId: string) => Section[]
   createTask: (p: {
     title: string
@@ -522,6 +525,37 @@ export const useDataStore = create<DataState>()((set, get) => ({
         sections: s.sections.map((sec) => (sec.id === id ? { ...sec, collapsed: !next } : sec)),
       }))
     })
+  },
+
+  updateSection: (id, p) => {
+    const prev = get().sections.find((s) => s.id === id)
+    set((s) => ({ sections: s.sections.map((sec) => (sec.id === id ? { ...sec, ...p } : sec)) }))
+    void sectionsApi.update(id, p).catch(() => {
+      if (prev) set((s) => ({ sections: s.sections.map((sec) => (sec.id === id ? prev : sec)) }))
+      toast.error('Failed to update section')
+    })
+  },
+
+  deleteSection: (id) => {
+    const prevSections = get().sections
+    const prevTasks = get().tasks
+    const name = prevSections.find((s) => s.id === id)?.name ?? 'Section'
+    set((s) => ({
+      sections: s.sections.filter((sec) => sec.id !== id),
+      tasks: s.tasks.map((t) => (t.sectionId === id ? { ...t, sectionId: null } : t)),
+    }))
+    toast.success(`"${name}" deleted`)
+    void sectionsApi.delete(id).catch(() => {
+      set({ sections: prevSections, tasks: prevTasks })
+      toast.error('Failed to delete section')
+    })
+  },
+
+  reorderSection: (id, newOrder) => {
+    set((s) => ({
+      sections: s.sections.map((sec) => (sec.id === id ? { ...sec, order: newOrder } : sec)),
+    }))
+    void sectionsApi.update(id, { order: newOrder }).catch(() => void get().hydrate())
   },
 
   createTag: (name, color) => {

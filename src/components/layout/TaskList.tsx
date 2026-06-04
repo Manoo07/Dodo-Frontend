@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown, Plus } from 'lucide-react'
 import TaskListSkeleton from './TaskListSkeleton'
 import {
   DndContext,
@@ -76,12 +76,15 @@ export default function TaskList() {
   const lists = useDataStore((s) => s.lists)
   const tags = useDataStore((s) => s.tags)
   const tasksFlat = useDataStore((s) => s.tasks)
+  const sectionsFlat = useDataStore((s) => s.sections)
   const getTasksForView = useDataStore((s) => s.getTasksForView)
-  const getSectionsByList = useDataStore((s) => s.getSectionsByList)
   const getListById = useDataStore((s) => s.getListById)
   const createTask = useDataStore((s) => s.createTask)
   const updateTask = useDataStore((s) => s.updateTask)
   const createSection = useDataStore((s) => s.createSection)
+  const updateSection = useDataStore((s) => s.updateSection)
+  const deleteSection = useDataStore((s) => s.deleteSection)
+  const reorderSection = useDataStore((s) => s.reorderSection)
   const toggleComplete = useDataStore((s) => s.toggleComplete)
   const deleteTask = useDataStore((s) => s.deleteTask)
   const restoreTask = useDataStore((s) => s.restoreTask)
@@ -104,6 +107,7 @@ export default function TaskList() {
   const [addingSubtaskFor, setAddingSubtaskFor] = useState<string | null>(null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [completedExpanded, setCompletedExpanded] = useState<Set<string>>(new Set())
+  const [addingTaskInSectionId, setAddingTaskInSectionId] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -124,8 +128,11 @@ export default function TaskList() {
   )
 
   const sections = useMemo(
-    () => (selectedListId && isListView ? getSectionsByList(selectedListId) : []),
-    [getSectionsByList, selectedListId, isListView, tasksFlat],
+    () =>
+      selectedListId && isListView
+        ? sectionsFlat.filter((s) => s.listId === selectedListId).sort((a, b) => a.order - b.order)
+        : [],
+    [sectionsFlat, selectedListId, isListView],
   )
 
   // ── Render-phase derived state (avoids cascading renders from setState-in-effect) ──
@@ -240,6 +247,27 @@ export default function TaskList() {
     const section = createSection({ name, listId: selectedListId })
     setExpandedSections((prev) => new Set(prev).add(section.id))
     setShowAddSection(false)
+  }
+
+  function handleSectionDragEnd(e: DragEndEvent) {
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+    const ids = sections.map((s) => s.id)
+    const oldIdx = ids.indexOf(String(active.id))
+    const newIdx = ids.indexOf(String(over.id))
+    if (oldIdx === -1 || newIdx === -1) return
+    const sorted = [...sections].sort((a, b) => a.order - b.order)
+    let newOrder: number
+    if (newIdx === 0) {
+      newOrder = sorted[0].order - 1
+    } else if (newIdx >= sorted.length - 1) {
+      newOrder = sorted[sorted.length - 1].order + 1
+    } else {
+      const before = sorted[newIdx < oldIdx ? newIdx - 1 : newIdx].order
+      const after  = sorted[newIdx < oldIdx ? newIdx   : newIdx + 1].order
+      newOrder = (before + after) / 2
+    }
+    reorderSection(String(active.id), newOrder)
   }
 
   const activeListId = isListView ? selectedListId! : inboxList?.id
@@ -551,31 +579,73 @@ export default function TaskList() {
             />
           </div>
         ) : isListView && taskGroups ? (
-          taskGroups.map((group) => {
-            const activeSectionTasks = group.tasks.filter((t) => t.status === 'active')
-            const groupFlat = flattenTree(activeSectionTasks, 0, expandedIds)
-            const isExpanded = expandedSections.has(group.id)
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleSectionDragEnd}
+          >
+            <SortableContext
+              items={sections.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {taskGroups.map((group) => {
+                const isNamed = group.id !== '__unsectioned'
+                const activeSectionTasks = group.tasks.filter((t) => t.status === 'active')
+                const groupFlat = flattenTree(activeSectionTasks, 0, expandedIds)
+                const isExpanded = expandedSections.has(group.id)
 
-            return (
-              <div key={group.id}>
-                <SectionHeader
-                  name={group.name}
-                  count={groupFlat.length}
-                  isExpanded={isExpanded}
-                  onToggle={() => handleToggleSection(group.id)}
-                />
-                {isExpanded && (
-                  <div className="pb-1">
-                    {group.tasks.length === 0 ? (
-                      <p className="px-4 py-2 text-xs text-text-muted">No tasks in this section</p>
-                    ) : (
-                      renderSortableGroup(group.tasks, group.id)
+                return (
+                  <SortableItem key={group.id} id={group.id} disabled={!isNamed}>
+                    {(dragHandleProps) => (
+                      <div>
+                        <SectionHeader
+                          name={group.name}
+                          count={groupFlat.length}
+                          isExpanded={isExpanded}
+                          onToggle={() => handleToggleSection(group.id)}
+                          onRename={isNamed ? (name) => updateSection(group.id, { name }) : undefined}
+                          onDelete={isNamed ? () => deleteSection(group.id) : undefined}
+                          dragHandleProps={isNamed ? dragHandleProps : undefined}
+                        />
+                        {isExpanded && (
+                          <div className="pb-1">
+                            {group.tasks.length === 0 && addingTaskInSectionId !== group.id && (
+                              <p className="px-4 py-2 text-xs text-text-muted">No tasks in this section</p>
+                            )}
+                            {group.tasks.length > 0 && renderSortableGroup(group.tasks, group.id)}
+                            {/* Per-section add task */}
+                            {canAddTasks && isNamed && activeListId && (
+                              addingTaskInSectionId === group.id ? (
+                                <div className="px-2">
+                                  <AddTaskBar
+                                    listId={activeListId}
+                                    placeholder={`Add task to "${group.name}"…`}
+                                    onAdd={(t, lid) => {
+                                      handleAddTask(t, lid, null, group.id)
+                                      setAddingTaskInSectionId(null)
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setAddingTaskInSectionId(group.id)}
+                                  className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-medium text-text-muted hover:text-text-secondary transition-colors opacity-0 group-hover:opacity-100"
+                                >
+                                  <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                                  Add task
+                                </button>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
-              </div>
-            )
-          })
+                  </SortableItem>
+                )
+              })}
+            </SortableContext>
+          </DndContext>
         ) : (
           isListView ? renderSortableGroup(tasks, '__flat') : renderTaskRows(tasks)
         )}
