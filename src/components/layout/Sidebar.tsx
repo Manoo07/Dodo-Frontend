@@ -422,7 +422,7 @@ export default function Sidebar() {
       <aside className="bg-bg-sidebar border-r border-border flex flex-col h-full overflow-hidden">
 
         {/* ── Fixed top nav ── */}
-        <nav className="sidebar-section pt-3 pb-1 space-y-0.5 shrink-0">
+        <nav className="sidebar-section pt-5 pb-1 space-y-0.5 shrink-0">
           {NAV_ITEMS.map((item) => (
             <NavButton
               key={item.view}
