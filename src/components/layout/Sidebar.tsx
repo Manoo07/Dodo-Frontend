@@ -25,20 +25,22 @@ import { cn } from '../../lib/cn'
 import type { LucideIcon } from 'lucide-react'
 import type { Folder as FolderType, List, NavView } from '../../types'
 
-const NAV_ITEMS: { view: NavView; label: string; icon: LucideIcon }[] = [
-  { view: 'today', label: 'Today', icon: Sun },
-  { view: 'next7days', label: 'Next 7 Days', icon: CalendarRange },
+const NAV_ITEMS: { view: NavView; label: string; emoji: string }[] = [
+  { view: 'today',    label: 'Today',       emoji: '☀️' },
+  { view: 'next7days',label: 'Next 7 Days', emoji: '📅' },
 ]
 
 function NavButton({
   active,
   icon: Icon,
+  emoji,
   label,
   count,
   onClick,
 }: {
   active: boolean
-  icon: LucideIcon
+  icon?: LucideIcon
+  emoji?: string
   label: string
   count?: number
   onClick: () => void
@@ -49,7 +51,10 @@ function NavButton({
       onClick={onClick}
       className={cn('nav-item', active ? 'nav-item-active' : 'nav-item-default')}
     >
-      <Icon className="nav-icon" strokeWidth={1.8} />
+      {emoji
+        ? <span className="text-[15px] leading-none shrink-0">{emoji}</span>
+        : Icon && <Icon className="nav-icon" strokeWidth={1.8} />
+      }
       <span className="flex-1 truncate">{label}</span>
       {count !== undefined && count > 0 && (
         <span className="nav-count-badge">{count}</span>
@@ -422,11 +427,11 @@ export default function Sidebar() {
       <aside className="bg-bg-sidebar border-r border-border flex flex-col h-full overflow-hidden">
 
         {/* ── Fixed top nav ── */}
-        <nav className="sidebar-section pt-5 pb-1 space-y-0.5 shrink-0">
+        <nav className="sidebar-section pt-5 mt-1 pb-1 space-y-0.5 shrink-0">
           {NAV_ITEMS.map((item) => (
             <NavButton
               key={item.view}
-              icon={item.icon}
+              emoji={item.emoji}
               label={item.label}
               active={isNavActive(item.view)}
               onClick={() => handleNavClick(item.view)}
@@ -528,13 +533,13 @@ export default function Sidebar() {
           {/* Completed + Trash */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <NavButton
-              icon={CheckCircle2}
+              emoji="✅"
               label="Completed"
               active={isNavActive('completed')}
               onClick={() => handleNavClick('completed')}
             />
             <NavButton
-              icon={Trash2}
+              emoji="🗑️"
               label="Trash"
               active={isNavActive('trash')}
               onClick={() => handleNavClick('trash')}
