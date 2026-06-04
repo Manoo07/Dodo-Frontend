@@ -582,17 +582,38 @@ export default function TaskList() {
 
         {/* ── Load more ── */}
         {tasksHasMore && (
-          <div className="px-4 py-3 flex items-center justify-between">
-            <span className="text-[12px] text-text-muted">
-              Showing {tasks.length} of {tasksTotal} tasks
-            </span>
-            <button
-              type="button"
-              onClick={() => void loadMoreTasks()}
-              className="text-[12.5px] font-semibold text-accent hover:text-accent-hover transition-colors"
+          <div className="mx-2 mt-2 mb-3 px-2">
+            {/* Progress track */}
+            <div
+              className="rounded-full mb-2.5 overflow-hidden"
+              style={{ height: 2, background: 'rgba(255,255,255,0.06)' }}
             >
-              Load more →
-            </button>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.round((tasks.length / tasksTotal) * 100)}%`,
+                  background: 'var(--color-accent)',
+                  opacity: 0.45,
+                }}
+              />
+            </div>
+
+            {/* Count + action row */}
+            <div className="flex items-center justify-between">
+              <span
+                className="text-[11.5px] font-medium text-text-muted"
+                style={{ fontVariantNumeric: 'tabular-nums', opacity: 0.75 }}
+              >
+                {tasks.length} of {tasksTotal} tasks
+              </span>
+              <button
+                type="button"
+                onClick={() => void loadMoreTasks()}
+                className="text-[12px] font-semibold text-accent hover:text-accent-hover transition-colors"
+              >
+                Load more →
+              </button>
+            </div>
           </div>
         )}
       </div>
