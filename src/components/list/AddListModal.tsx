@@ -5,18 +5,6 @@ import { useDataStore } from '../../store/useDataStore'
 import { useAppStore } from '../../store/useAppStore'
 import { cn } from '../../lib/cn'
 
-// ── Icon emojis the user can pick ─────────────────────────────────────────────
-
-const LIST_ICONS = [
-  '📋','📝','📚','📖','🎯','💼','🏠','⭐','🔥','💡',
-  '🎨','🏋️','📅','🛒','✅','🚀','💰','🎮','🎵','🏆',
-  '📌','🔔','🌟','💪','📊','🔧','🌈','❤️','🌿','🎓',
-]
-
-function randomIcon() {
-  return LIST_ICONS[Math.floor(Math.random() * LIST_ICONS.length)]
-}
-
 // ── Colour palette ─────────────────────────────────────────────────────────────
 
 const LIST_COLORS = [
@@ -42,9 +30,8 @@ export default function AddListModal({ open, onClose }: Props) {
   const [name,     setName]     = useState('')
   const [color,    setColor]    = useState<string | null>(null)
   const [folderId, setFolderId] = useState('none')
-  const [icon,     setIcon]     = useState(randomIcon)   // random default on open
 
-  function reset() { setName(''); setColor(null); setFolderId('none'); setIcon(randomIcon()) }
+  function reset() { setName(''); setColor(null); setFolderId('none') }
 
   function handleClose() { reset(); onClose() }
 
@@ -53,7 +40,7 @@ export default function AddListModal({ open, onClose }: Props) {
     const resolvedColor = color === 'rainbow' ? '#4A90D9' : (color ?? '#636369')
     const list = createList({
       name: name.trim(),
-      icon,
+      icon: undefined,
       color: resolvedColor,
       folderId: folderId === 'none' ? null : folderId,
     })
@@ -110,31 +97,6 @@ export default function AddListModal({ open, onClose }: Props) {
           onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(91,155,213,0.6)' }}
           onBlur={(e)  => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
         />
-
-        {/* Icon picker */}
-        <div>
-          <p className="text-[11.5px] font-semibold text-text-muted uppercase tracking-widest mb-3">
-            Icon
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {LIST_ICONS.map((em) => (
-              <button
-                key={em}
-                type="button"
-                onClick={() => setIcon(em)}
-                className="text-[18px] rounded-lg transition-all flex items-center justify-center"
-                style={{
-                  width: 36, height: 36,
-                  background: icon === em ? 'rgba(91,155,213,0.18)' : 'rgba(255,255,255,0.04)',
-                  border: `1.5px solid ${icon === em ? 'rgba(91,155,213,0.5)' : 'transparent'}`,
-                  transform: icon === em ? 'scale(1.1)' : 'scale(1)',
-                }}
-              >
-                {em}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Colour picker */}
         <div>

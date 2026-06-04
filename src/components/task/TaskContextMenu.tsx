@@ -95,8 +95,11 @@ function PriorityBtn({
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-center rounded-xl py-3 transition-all hover:bg-white/6"
-      style={active ? { boxShadow: `0 0 0 2px ${color}`, background: color + '18' } : undefined}
+      className="flex items-center justify-center rounded-xl py-3 transition-all"
+      style={active
+        ? { background: color + '20', border: `1.5px solid ${color}40` }
+        : { border: '1.5px solid transparent' }
+      }
     >
       <Flag
         className="h-5 w-5"

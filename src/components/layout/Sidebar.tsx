@@ -4,6 +4,9 @@ import { toast } from '../../store/useToastStore'
 import { createPortal } from 'react-dom'
 import {
   Plus,
+  Sun,
+  CalendarRange,
+  CheckCircle2,
   Trash2,
   Tag,
   ChevronRight,
@@ -22,22 +25,20 @@ import { cn } from '../../lib/cn'
 import type { LucideIcon } from 'lucide-react'
 import type { Folder as FolderType, List, NavView } from '../../types'
 
-const NAV_ITEMS: { view: NavView; label: string; emoji: string }[] = [
-  { view: 'today',    label: 'Today',       emoji: '☀️' },
-  { view: 'next7days',label: 'Next 7 Days', emoji: '📅' },
+const NAV_ITEMS: { view: NavView; label: string; icon: LucideIcon }[] = [
+  { view: 'today',     label: 'Today',       icon: Sun },
+  { view: 'next7days', label: 'Next 7 Days', icon: CalendarRange },
 ]
 
 function NavButton({
   active,
   icon: Icon,
-  emoji,
   label,
   count,
   onClick,
 }: {
   active: boolean
-  icon?: LucideIcon
-  emoji?: string
+  icon: LucideIcon
   label: string
   count?: number
   onClick: () => void
@@ -48,10 +49,7 @@ function NavButton({
       onClick={onClick}
       className={cn('nav-item', active ? 'nav-item-active' : 'nav-item-default')}
     >
-      {emoji
-        ? <span className="text-[15px] leading-none shrink-0">{emoji}</span>
-        : Icon && <Icon className="nav-icon" strokeWidth={1.8} />
-      }
+      <Icon className="nav-icon" strokeWidth={1.8} />
       <span className="flex-1 truncate">{label}</span>
       {count !== undefined && count > 0 && (
         <span className="nav-count-badge">{count}</span>
@@ -90,11 +88,7 @@ function ListButton({
           className="flex items-center gap-2 flex-1 min-w-0"
           style={{ height: '100%' }}
         >
-          {list.icon ? (
-            <span className="shrink-0 text-sm leading-none">{list.icon}</span>
-          ) : (
-            <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: list.color }} />
-          )}
+          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: list.color }} />
           <span className="flex-1 truncate text-left">{list.name}</span>
         </button>
 
@@ -428,7 +422,7 @@ export default function Sidebar() {
           {NAV_ITEMS.map((item) => (
             <NavButton
               key={item.view}
-              emoji={item.emoji}
+              icon={item.icon}
               label={item.label}
               active={isNavActive(item.view)}
               onClick={() => handleNavClick(item.view)}
@@ -530,13 +524,13 @@ export default function Sidebar() {
           {/* Completed + Trash */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <NavButton
-              emoji="✅"
+              icon={CheckCircle2}
               label="Completed"
               active={isNavActive('completed')}
               onClick={() => handleNavClick('completed')}
             />
             <NavButton
-              emoji="🗑️"
+              icon={Trash2}
               label="Trash"
               active={isNavActive('trash')}
               onClick={() => handleNavClick('trash')}
