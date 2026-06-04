@@ -286,8 +286,8 @@ function TaskDetailContent({
   const footerMenuItems = buildTaskMenuItems({
     onAddSubtask: () => setAddingSubtask(true),
     onMarkWontDo: () => markWontDo(task.id),
-    onPin: () => updateTask(task.id, { isPinned: !task.isPinned }),
-    isPinned: task.isPinned,
+    onPin: () => updateTask(task.id, { isPinned: !liveTask.isPinned }),
+    isPinned: liveTask.isPinned,
     onDelete: () => {
       deleteTask(task.id)
       setSelectedTaskId(null)
@@ -320,11 +320,11 @@ function TaskDetailContent({
             onClick={() => setShowDatePicker((v) => !v)}
             className={cn(
               'detail-due-btn',
-              task.dueDate ? 'text-accent' : 'text-text-muted hover:text-text-primary',
+              liveTask.dueDate ? 'text-accent' : 'text-text-muted hover:text-text-primary',
             )}
           >
             <Calendar className="nav-icon" strokeWidth={1.8} />
-            <span>{formatDueLabel(task.dueDate)}</span>
+            <span>{formatDueLabel(liveTask.dueDate)}</span>
           </button>
           {showDatePicker && (
             <>
@@ -336,7 +336,7 @@ function TaskDetailContent({
               />
               <div className="absolute left-0 top-full mt-2 z-50">
                 <DatePicker
-                  value={task.dueDate}
+                  value={liveTask.dueDate}
                   onChange={(iso) => updateTask(task.id, { dueDate: iso })}
                   onClose={() => setShowDatePicker(false)}
                 />
@@ -421,9 +421,9 @@ function TaskDetailContent({
             <IconButton icon={AlignJustify} label="Notes" size="sm" className="shrink-0" />
           </div>
 
-          {task.tags.length > 0 && (
+          {liveTask.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
-              {task.tags.map((tt) => (
+              {liveTask.tags.map((tt) => (
                 <span
                   key={tt.tagId}
                   className="text-xs font-medium px-2.5 py-1 rounded-full"
@@ -453,17 +453,17 @@ function TaskDetailContent({
         <div className="detail-subtasks-pane detail-panel-content">
           <section>
             <h3 className="subtask-section-header">Subtasks</h3>
-            {(task.children && task.children.length > 0) || addingSubtask ? (
+            {(liveTask.children && liveTask.children.length > 0) || addingSubtask ? (
               <>
                 <ul className="space-y-1 relative">
                   {/* Vertical connector line at checkbox column */}
-                  {task.children && task.children.length > 0 && (
+                  {liveTask.children && liveTask.children.length > 0 && (
                     <div
                       className="absolute top-0 bottom-0 pointer-events-none"
                       style={{ left: 6, width: 1.5, background: 'rgba(255,255,255,0.14)' }}
                     />
                   )}
-                  {task.children?.map((child) => (
+                  {liveTask.children?.map((child) => (
                     <li key={child.id}>
                       {editingSubtaskId === child.id ? (
                         /* ── Inline edit mode ── */

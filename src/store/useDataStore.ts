@@ -330,6 +330,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
           tasks: s.tasks.filter((t) => t.id !== temp.id),
           error: apiErrorMessage(err),
         }))
+        toast.error(`Failed to create task: ${apiErrorMessage(err)}`)
       })
 
     return temp
@@ -352,6 +353,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
       })
       .catch((err) => {
         if (prev) set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? prev : t)), error: apiErrorMessage(err) }))
+        toast.error(`Failed to save: ${apiErrorMessage(err)}`)
       })
   },
 
