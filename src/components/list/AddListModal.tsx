@@ -1,124 +1,39 @@
 import { useState } from 'react'
-import { List, LayoutGrid, GanttChart, ChevronDown, Ban } from 'lucide-react'
-import Modal from '../ui/Modal'
+import { createPortal } from 'react-dom'
+import { Ban, ChevronDown } from 'lucide-react'
 import { useDataStore } from '../../store/useDataStore'
 import { useAppStore } from '../../store/useAppStore'
 import { cn } from '../../lib/cn'
-import type { LucideIcon } from 'lucide-react'
+
+// ── Colour palette ─────────────────────────────────────────────────────────────
 
 const LIST_COLORS = [
-  { id: 'none', label: 'None', value: null },
-  { id: 'red', label: 'Red', value: '#FF3B30' },
-  { id: 'orange', label: 'Orange', value: '#FF9500' },
-  { id: 'yellow', label: 'Yellow', value: '#FFCC00' },
-  { id: 'green', label: 'Green', value: '#34C759' },
+  { id: 'none',      label: 'None',       value: null },
+  { id: 'red',       label: 'Red',        value: '#FF3B30' },
+  { id: 'orange',    label: 'Orange',     value: '#FF9500' },
+  { id: 'yellow',    label: 'Yellow',     value: '#FFCC00' },
+  { id: 'green',     label: 'Green',      value: '#34C759' },
   { id: 'lightblue', label: 'Light Blue', value: '#5AC8FA' },
-  { id: 'blue', label: 'Blue', value: '#4A90D9' },
-  { id: 'purple', label: 'Purple', value: '#AF52DE' },
-  { id: 'rainbow', label: 'Rainbow', value: 'rainbow' },
+  { id: 'blue',      label: 'Blue',       value: '#4A90D9' },
+  { id: 'purple',    label: 'Purple',     value: '#AF52DE' },
+  { id: 'rainbow',   label: 'Rainbow',    value: 'rainbow' },
 ] as const
 
-const VIEW_TYPES: { id: string; label: string; icon: LucideIcon }[] = [
-  { id: 'list', label: 'List', icon: List },
-  { id: 'board', label: 'Board', icon: LayoutGrid },
-  { id: 'timeline', label: 'Timeline', icon: GanttChart },
-]
+// ── Component ──────────────────────────────────────────────────────────────────
 
-interface AddListModalProps {
-  open: boolean
-  onClose: () => void
-}
+interface Props { open: boolean; onClose: () => void }
 
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="block text-[13px] font-medium text-text-secondary mb-3">{children}</span>
-  )
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  options: { value: string; label: string }[]
-}) {
-  return (
-    <div>
-      <FieldLabel>{label}</FieldLabel>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="add-list-select"
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
-          strokeWidth={1.75}
-        />
-      </div>
-    </div>
-  )
-}
-
-function ListPreview({ name, previewColor }: { name: string; previewColor: string }) {
-  const displayName = name.trim() || 'New List'
-
-  return (
-    <div className="add-list-preview-pane">
-      <p className="add-list-preview-label">Preview</p>
-      <div className="add-list-preview-sidebar">
-        <div className="add-list-preview-sidebar-header">
-          <span className="add-list-preview-section-label">Lists</span>
-        </div>
-        <div className="add-list-preview-list">
-          <div className="add-list-preview-item add-list-preview-item-ghost">
-            <span className="add-list-preview-dot" style={{ backgroundColor: '#636366' }} />
-            <span className="add-list-preview-item-name">Inbox</span>
-          </div>
-          <div className="add-list-preview-item add-list-preview-item-active">
-            <span className="add-list-preview-dot" style={{ background: previewColor }} />
-            <span className="add-list-preview-item-name">{displayName}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default function AddListModal({ open, onClose }: AddListModalProps) {
-  const folders = useDataStore((s) => s.folders)
+export default function AddListModal({ open, onClose }: Props) {
+  const folders    = useDataStore((s) => s.folders)
   const createList = useDataStore((s) => s.createList)
 
-  const [name, setName] = useState('')
-  const [color, setColor] = useState<string | null>(null)
-  const [viewType, setViewType] = useState('list')
+  const [name,     setName]     = useState('')
+  const [color,    setColor]    = useState<string | null>(null)
   const [folderId, setFolderId] = useState('none')
-  const [listType, setListType] = useState('task')
-  const [smartList, setSmartList] = useState('all')
 
-  function resetForm() {
-    setName('')
-    setColor(null)
-    setViewType('list')
-    setFolderId('none')
-    setListType('task')
-    setSmartList('all')
-  }
+  function reset() { setName(''); setColor(null); setFolderId('none') }
 
-  function handleClose() {
-    resetForm()
-    onClose()
-  }
+  function handleClose() { reset(); onClose() }
 
   function handleSave() {
     if (!name.trim()) return
@@ -130,154 +45,143 @@ export default function AddListModal({ open, onClose }: AddListModalProps) {
       folderId: folderId === 'none' ? null : folderId,
     })
     useAppStore.getState().navigateToList(list.id)
-    resetForm()
+    reset()
     onClose()
   }
 
-  const previewColor =
-    color === 'rainbow'
-      ? 'linear-gradient(135deg, #FF3B30, #FF9500, #FFCC00, #34C759, #5AC8FA, #4A90D9, #AF52DE)'
-      : (color ?? '#636366')
+  if (!open) return null
 
   const folderOptions = [
-    { value: 'none', label: 'None' },
+    { value: 'none', label: 'No folder' },
     ...folders.map((f) => ({ value: f.id, label: f.name })),
   ]
 
-  return (
-    <Modal open={open} onClose={handleClose} fullscreen>
-      <div className="add-list-dialog">
-        <div className="add-list-titlebar">
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-            <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
-            <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.55)', padding: 20 }}
+      onClick={handleClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: 380,
+          background: '#1e1e22',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 18,
+          padding: '24px 24px 20px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.55)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 20,
+        }}
+      >
+        {/* Title */}
+        <h2 className="text-[15px] font-semibold text-text-primary">New List</h2>
+
+        {/* Name input */}
+        <input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          placeholder="List name"
+          className="w-full rounded-xl text-[14px] text-text-primary placeholder:text-text-muted/50 outline-none"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1.5px solid rgba(255,255,255,0.1)',
+            height: 44,
+            padding: '0 14px',
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(91,155,213,0.6)' }}
+          onBlur={(e)  => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+        />
+
+        {/* Colour picker */}
+        <div>
+          <p className="text-[11.5px] font-semibold text-text-muted uppercase tracking-widest mb-3">
+            Colour
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {LIST_COLORS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                title={c.label}
+                onClick={() => setColor(c.value)}
+                className={cn(
+                  'h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0',
+                  color === c.value
+                    ? 'border-white scale-110 shadow-md'
+                    : 'border-transparent hover:scale-105',
+                )}
+                style={
+                  c.id === 'none'
+                    ? { background: 'var(--color-bg-primary)', borderColor: color === null ? '#fff' : 'rgba(255,255,255,0.15)' }
+                    : c.id === 'rainbow'
+                      ? { background: 'linear-gradient(135deg,#FF3B30,#FF9500,#FFCC00,#34C759,#5AC8FA,#4A90D9,#AF52DE)' }
+                      : { backgroundColor: c.value ?? undefined }
+                }
+              >
+                {c.id === 'none' && <Ban className="h-3.5 w-3.5 text-text-muted" strokeWidth={1.75} />}
+              </button>
+            ))}
           </div>
-          <h2 id="add-list-title" className="text-sm font-semibold text-text-primary">
-            Add List
-          </h2>
         </div>
 
-        <div className="add-list-body">
-          <div className="add-list-form">
-            <div className="add-list-name-input">
-              <List className="h-[18px] w-[18px] text-text-muted shrink-0" strokeWidth={1.75} />
-              <input
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                placeholder="Name"
-                className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
+        {/* Folder — only shown when folders exist */}
+        {folders.length > 0 && (
+          <div>
+            <p className="text-[11.5px] font-semibold text-text-muted uppercase tracking-widest mb-3">
+              Folder
+            </p>
+            <div className="relative">
+              <select
+                value={folderId}
+                onChange={(e) => setFolderId(e.target.value)}
+                className="w-full rounded-xl text-[13.5px] text-text-primary outline-none appearance-none"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1.5px solid rgba(255,255,255,0.1)',
+                  height: 44,
+                  padding: '0 14px',
+                }}
+              >
+                {folderOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted"
+                strokeWidth={1.75}
               />
             </div>
-
-            <div>
-              <FieldLabel>List Color</FieldLabel>
-              <div className="flex flex-wrap items-center gap-2.5">
-                {LIST_COLORS.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    title={c.label}
-                    onClick={() => setColor(c.value)}
-                    className={cn(
-                      'h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0',
-                      color === c.value
-                        ? 'border-white scale-110 shadow-md'
-                        : 'border-transparent hover:scale-105',
-                    )}
-                    style={
-                      c.id === 'none'
-                        ? {
-                            background: 'var(--color-bg-primary)',
-                            borderColor: color === null ? '#ffffff' : 'var(--color-border)',
-                          }
-                        : c.id === 'rainbow'
-                          ? {
-                              background:
-                                'linear-gradient(135deg, #FF3B30, #FF9500, #FFCC00, #34C759, #5AC8FA, #4A90D9, #AF52DE)',
-                            }
-                          : { backgroundColor: c.value ?? undefined }
-                    }
-                  >
-                    {c.id === 'none' && (
-                      <Ban className="h-3.5 w-3.5 text-text-muted" strokeWidth={1.75} />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <FieldLabel>View Type</FieldLabel>
-              <div className="add-list-view-toggle">
-                {VIEW_TYPES.map((vt) => {
-                  const Icon = vt.icon
-                  return (
-                    <button
-                      key={vt.id}
-                      type="button"
-                      title={vt.label}
-                      onClick={() => setViewType(vt.id)}
-                      className={cn(
-                        'add-list-view-btn',
-                        viewType === vt.id && 'add-list-view-btn-active',
-                      )}
-                    >
-                      <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <SelectField
-              label="Folder"
-              value={folderId}
-              onChange={setFolderId}
-              options={folderOptions}
-            />
-
-            <SelectField
-              label="List Type"
-              value={listType}
-              onChange={setListType}
-              options={[
-                { value: 'task', label: 'Task List' },
-                { value: 'note', label: 'Note List' },
-              ]}
-            />
-
-            <SelectField
-              label="Show in Smart List"
-              value={smartList}
-              onChange={setSmartList}
-              options={[
-                { value: 'all', label: 'All tasks' },
-                { value: 'today', label: 'Today only' },
-                { value: 'none', label: "Don't show" },
-              ]}
-            />
-
-            <div className="add-list-actions">
-              <button type="button" onClick={handleClose} className="add-list-btn-cancel">
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={!name.trim()}
-                className="add-list-btn-save"
-              >
-                Save
-              </button>
-            </div>
           </div>
+        )}
 
-          <ListPreview name={name} previewColor={previewColor} />
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex-1 rounded-xl text-[13.5px] font-medium text-text-secondary transition-colors hover:text-text-primary"
+            style={{ height: 42, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!name.trim()}
+            className="flex-1 rounded-xl text-[13.5px] font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed"
+            style={{ height: 42, background: 'var(--color-accent)' }}
+          >
+            Create
+          </button>
         </div>
       </div>
-    </Modal>
+    </div>,
+    document.body,
   )
 }
