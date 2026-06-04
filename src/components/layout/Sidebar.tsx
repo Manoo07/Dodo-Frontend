@@ -3,10 +3,7 @@ import SidebarSkeleton from './SidebarSkeleton'
 import { toast } from '../../store/useToastStore'
 import { createPortal } from 'react-dom'
 import {
-  Sun,
-  CalendarRange,
   Plus,
-  CheckCircle2,
   Trash2,
   Tag,
   ChevronRight,
