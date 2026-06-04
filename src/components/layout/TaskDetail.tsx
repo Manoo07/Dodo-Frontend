@@ -460,7 +460,7 @@ function TaskDetailContent({
                   {task.children && task.children.length > 0 && (
                     <div
                       className="absolute top-0 bottom-0 pointer-events-none"
-                      style={{ left: 6, width: 1, background: 'rgba(255,255,255,0.08)' }}
+                      style={{ left: 6, width: 1.5, background: 'rgba(255,255,255,0.14)' }}
                     />
                   )}
                   {task.children?.map((child) => (

@@ -69,15 +69,19 @@ function QuickDateBtn({
       type="button"
       onClick={onClick}
       title={label}
-      className={cn(
-        'flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 transition-all text-[10.5px] font-medium',
-        active
-          ? 'bg-accent/15 text-accent'
-          : 'text-text-muted hover:bg-white/6 hover:text-text-primary',
-      )}
+      className="flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 transition-all text-[10.5px] font-medium"
+      style={active
+        ? { background: 'rgba(255,255,255,0.14)', color: 'var(--color-text-primary)' }
+        : { color: 'var(--color-text-muted)' }
+      }
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
     >
-      <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-      <span>{label}</span>
+      <Icon
+        className="h-4.5 w-4.5"
+        strokeWidth={active ? 2.25 : 1.75}
+      />
+      <span style={{ fontWeight: active ? 600 : 500 }}>{label}</span>
     </button>
   )
 }
@@ -97,8 +101,8 @@ function PriorityBtn({
       onClick={onClick}
       className="flex items-center justify-center rounded-xl py-3 transition-all"
       style={active
-        ? { background: color + '20', border: `1.5px solid ${color}40` }
-        : { border: '1.5px solid transparent' }
+        ? { background: color + '28', outline: `2px solid ${color}`, outlineOffset: '-2px' }
+        : { outline: '2px solid transparent', outlineOffset: '-2px' }
       }
     >
       <Flag

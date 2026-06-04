@@ -310,7 +310,7 @@ export default function TaskList() {
             })
           }
           className="section-header-row group"
-          style={{ paddingLeft: depth > 0 ? `${10 + depth * 20}px` : undefined }}
+          style={{ paddingLeft: depth > 0 ? `${10 + depth * 28}px` : undefined }}
         >
           <ChevronDown
             className="h-4 w-4 text-text-muted shrink-0 transition-transform duration-150"
@@ -331,12 +331,12 @@ export default function TaskList() {
               <div key={task.id}>
                 {renderTaskItem(task, depth)}
                 {task.children && expandedIds.has(task.id) && (() => {
-                  const lineLeft = 10 + depth * 20 + 8   // center of this depth's chevron
+                  const lineLeft = 10 + depth * 28 + 8   // center of this depth's chevron
                   return (
                     <div className="relative">
                       <div
                         className="absolute top-0 bottom-0 pointer-events-none"
-                        style={{ left: lineLeft, width: 1, background: 'rgba(255,255,255,0.08)' }}
+                        style={{ left: lineLeft, width: 1.5, background: 'rgba(255,255,255,0.14)' }}
                       />
                       {flattenTree(task.children, depth + 1, expandedIds).map(({ task: child, depth: d }) =>
                         renderTaskItem(child, d)
@@ -382,7 +382,7 @@ export default function TaskList() {
                           {/* Vertical connector line */}
                           <div
                             className="absolute top-0 bottom-0 pointer-events-none"
-                            style={{ left: lineLeft, width: 1, background: 'rgba(255,255,255,0.08)' }}
+                            style={{ left: lineLeft, width: 1.5, background: 'rgba(255,255,255,0.14)' }}
                           />
                           {activeChildren.map(({ task: child, depth }) => renderTaskItem(child, depth))}
                           {renderCompletedStrip(doneChildren.map((x) => x.task), `${task.id}_children`, 1)}

@@ -100,7 +100,7 @@ export default function TaskItem({
     <>
       <div
         className={cn('task-row group', isSelected && 'task-row-selected')}
-        style={{ paddingLeft: `${10 + depth * 20}px` }}
+        style={{ paddingLeft: `${10 + depth * 28}px` }}
         onClick={() => onSelect(task)}
         onContextMenu={handleContextMenu}
       >
