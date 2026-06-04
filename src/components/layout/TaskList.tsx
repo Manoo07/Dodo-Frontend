@@ -307,7 +307,7 @@ export default function TaskList() {
           onClick={() =>
             setCompletedExpanded((prev) => {
               const next = new Set(prev)
-              open ? next.delete(groupKey) : next.add(groupKey)
+              if (open) next.delete(groupKey); else next.add(groupKey)
               return next
             })
           }
