@@ -7,6 +7,7 @@ import {
   Sun,
   CalendarRange,
   CheckCircle2,
+  Edit2,
   Trash2,
   Tag,
   ChevronRight,
@@ -20,6 +21,8 @@ import { useAppStore } from '../../store/useAppStore'
 import { useDataStore } from '../../store/useDataStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import AddListModal from '../list/AddListModal'
+import EditListModal from '../list/EditListModal'
+import { LIST_ICON_MAP } from '../ui/ListIconPicker'
 import { SidebarSection, SidebarHint, SidebarDivider } from './SidebarSection'
 import { cn } from '../../lib/cn'
 import type { LucideIcon } from 'lucide-react'
@@ -72,6 +75,10 @@ function ListButton({
   onDelete: () => void
 }) {
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showEdit,    setShowEdit]    = useState(false)
+
+  // Resolve the stored icon key → Lucide component
+  const ListIcon = list.icon ? LIST_ICON_MAP[list.icon] : null
 
   return (
     <>
@@ -81,6 +88,7 @@ function ListButton({
           active ? 'nav-item-active' : 'nav-item-default',
         )}
         style={{ paddingRight: 6 }}
+        onContextMenu={(e) => { e.preventDefault(); setShowEdit(true) }}
       >
         <button
           type="button"
@@ -88,7 +96,11 @@ function ListButton({
           className="flex items-center gap-2 flex-1 min-w-0"
           style={{ height: '100%' }}
         >
-          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: list.color }} />
+          {/* Icon or colour dot */}
+          {ListIcon
+            ? <ListIcon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} style={{ color: list.color }} />
+            : <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: list.color }} />
+          }
           <span className="flex-1 truncate text-left">{list.name}</span>
         </button>
 
@@ -97,17 +109,33 @@ function ListButton({
           <span className="nav-count-badge shrink-0 group-hover:hidden">{count}</span>
         )}
 
-        {/* Delete button — appears on hover */}
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setShowConfirm(true) }}
-          title="Delete list"
-          className="shrink-0 flex items-center justify-center rounded-md transition-all opacity-0 group-hover:opacity-100 text-text-muted hover:text-priority-p1 hover:bg-priority-p1/10"
-          style={{ width: 22, height: 22 }}
-        >
-          <X className="h-3.5 w-3.5" strokeWidth={2} />
-        </button>
+        {/* Hover actions */}
+        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity shrink-0">
+          {/* Edit */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowEdit(true) }}
+            title="Edit list"
+            className="flex items-center justify-center rounded-md transition-colors text-text-muted hover:text-text-primary hover:bg-white/6"
+            style={{ width: 22, height: 22 }}
+          >
+            <Edit2 className="h-3 w-3" strokeWidth={2} />
+          </button>
+          {/* Delete */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowConfirm(true) }}
+            title="Delete list"
+            className="flex items-center justify-center rounded-md transition-colors text-text-muted hover:text-priority-p1 hover:bg-priority-p1/10"
+            style={{ width: 22, height: 22 }}
+          >
+            <X className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+        </div>
       </div>
+
+      {/* Edit modal */}
+      {showEdit && <EditListModal list={list} onClose={() => setShowEdit(false)} />}
 
       {/* ── Centered confirmation portal ── */}
       {showConfirm && createPortal(
