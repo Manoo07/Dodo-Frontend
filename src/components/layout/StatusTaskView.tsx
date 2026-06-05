@@ -133,7 +133,7 @@ function StatusTaskRow({ task, isSelected, onSelect, onAction, kind }: {
     <div
       className={cn(
         'flex items-center gap-2.5 cursor-pointer transition-colors',
-        'hover:bg-white/4 rounded-lg mx-3 px-3',
+        'hover:bg-white/4 rounded-md mx-2 px-3',
         isSelected && 'bg-white/6',
       )}
       style={{ height: 40, minHeight: 40 }}
@@ -175,36 +175,47 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
   kind: StatusViewKind
 }) {
   return (
-    <div className="mb-3">
-      {/* Header — full-width with accent left bar */}
+    <div className="mb-4">
+      {/* Section header band */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2.5 px-5 py-1.5 text-left transition-colors hover:bg-white/3 group"
-        style={{ borderLeft: `3px solid ${accentColor}`, paddingLeft: 18 }}
+        className="w-full flex items-center gap-2.5 text-left transition-colors"
+        style={{
+          borderLeft: `4px solid ${accentColor}`,
+          background: accentColor + '14',
+          padding: '8px 16px 8px 14px',
+        }}
       >
         <ChevronDown
-          className="h-3.5 w-3.5 text-text-muted shrink-0 transition-transform duration-150"
-          style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-          strokeWidth={2}
+          className="h-3.5 w-3.5 shrink-0 transition-transform duration-150"
+          style={{
+            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+            color: accentColor,
+            opacity: 0.8,
+          }}
+          strokeWidth={2.5}
         />
-        <span className="text-[13px] font-semibold text-text-primary flex-1 leading-none py-1">
+        <span
+          className="flex-1 text-[13.5px] font-bold leading-none"
+          style={{ color: accentColor }}
+        >
           {label}
         </span>
         <span
-          className="text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md"
-          style={{
-            background: accentColor + '1a',
-            color: accentColor,
-          }}
+          className="text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full"
+          style={{ background: accentColor + '30', color: accentColor }}
         >
           {tasks.length}
         </span>
       </button>
 
-      {/* Task rows — indented to line up with header text */}
+      {/* Task rows */}
       {isOpen && (
-        <div className="mt-0.5 mb-1">
+        <div
+          className="py-1"
+          style={{ borderLeft: `4px solid ${accentColor}22` }}
+        >
           {tasks.map((task) => (
             <StatusTaskRow
               key={task.id}
