@@ -13,12 +13,11 @@ const QUADRANTS: {
   priority: Priority
   label: string
   color: string
-  bg: string
 }[] = [
-  { id: 'q1', priority: 'p1',   label: 'Urgent & Important',         color: '#e05252', bg: 'rgba(224,82,82,0.07)'   },
-  { id: 'q2', priority: 'p2',   label: 'Not Urgent & Important',     color: '#d4853a', bg: 'rgba(212,133,58,0.07)'  },
-  { id: 'q3', priority: 'p3',   label: 'Urgent & Unimportant',       color: '#5b9bd5', bg: 'rgba(91,155,213,0.07)'  },
-  { id: 'q4', priority: 'none', label: 'Not Urgent & Unimportant',   color: '#10b981', bg: 'rgba(16,185,129,0.07)'  },
+  { id: 'q1', priority: 'p1',   label: 'Urgent & Important',       color: '#e05252' },
+  { id: 'q2', priority: 'p2',   label: 'Not Urgent & Important',   color: '#d4853a' },
+  { id: 'q3', priority: 'p3',   label: 'Urgent & Unimportant',     color: '#5b9bd5' },
+  { id: 'q4', priority: 'none', label: 'Not Urgent & Unimportant', color: '#10b981' },
 ]
 
 // ── Date grouping ──────────────────────────────────────────────────────────────
@@ -144,7 +143,6 @@ function Quadrant({
   priority,
   label,
   color,
-  bg,
   tasks,
   selectedTaskId,
   onSelect,
@@ -153,7 +151,6 @@ function Quadrant({
   priority: Priority
   label: string
   color: string
-  bg: string
   tasks: Task[]
   selectedTaskId: string | null
   onSelect: (t: Task) => void
@@ -175,33 +172,28 @@ function Quadrant({
   return (
     <div
       className="flex flex-col h-full min-h-0 overflow-hidden"
-      style={{ background: bg, borderRadius: 0 }}
+      style={{ background: 'var(--color-bg-primary)' }}
     >
+      {/* Colored top accent line */}
+      <div style={{ height: 3, background: color, opacity: 0.85, flexShrink: 0 }} />
+
       {/* Quadrant header */}
       <div
-        className="flex items-center gap-2 px-4 py-3 shrink-0"
-        style={{ borderBottom: `1px solid ${color}30` }}
+        className="flex items-center gap-2.5 px-4 shrink-0"
+        style={{
+          height: 44,
+          background: color + '12',
+          borderBottom: `1px solid ${color}22`,
+        }}
       >
-        {/* Colored indicator */}
         <span
-          className="inline-flex items-center justify-center rounded-md shrink-0"
-          style={{
-            width: 22,
-            height: 22,
-            background: color + '28',
-            border: `1.5px solid ${color}60`,
-          }}
+          className="inline-flex items-center justify-center rounded-lg shrink-0 text-[11px] font-bold"
+          style={{ width: 24, height: 24, background: color + '25', color }}
         >
-          {priority === 'p1' && <span style={{ fontSize: 11, lineHeight: 1 }}>!!!</span>}
-          {priority === 'p2' && <span style={{ fontSize: 11, lineHeight: 1 }}>!!</span>}
-          {priority === 'p3' && <span style={{ fontSize: 11, lineHeight: 1 }}>!</span>}
-          {priority === 'none' && <span style={{ fontSize: 10, lineHeight: 1 }}>–</span>}
+          {priority === 'p1' ? '!!!' : priority === 'p2' ? '!!' : priority === 'p3' ? '!' : '–'}
         </span>
-        <span className="text-[13.5px] font-semibold" style={{ color }}>{label}</span>
-        <span
-          className="ml-auto text-[11px] font-medium"
-          style={{ color: color + 'aa' }}
-        >
+        <span className="text-[13px] font-semibold flex-1" style={{ color }}>{label}</span>
+        <span className="text-[11px] font-medium tabular-nums" style={{ color: color + 'bb' }}>
           {activeCount}
         </span>
       </div>
@@ -261,7 +253,7 @@ export default function EisenhowerMatrix() {
       </div>
 
       {/* 2×2 grid */}
-      <div className="flex-1 grid grid-cols-2 grid-rows-2 min-h-0 overflow-hidden divide-x divide-y divide-white/5">
+      <div className="flex-1 grid grid-cols-2 grid-rows-2 min-h-0 overflow-hidden" style={{ gap: 1, background: 'rgba(255,255,255,0.06)' }}>
         {QUADRANTS.map((q) => {
           const tasks = allTasks.filter((t) => t.priority === q.priority)
           return (

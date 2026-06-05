@@ -222,10 +222,15 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
   const emptyTrash     = useDataStore((s) => s.emptyTrash)
   const { selectedTaskId, setSelectedTaskId } = useAppStore()
 
-  const [dateFilter, setDateFilter] = useState('all')
+  // Default to 'week' for filtered views so the list isn't overwhelming on first load.
+  // Trash shows everything (no date filter).
+  const [dateFilter, setDateFilter] = useState(cfg.showFilters ? 'week' : 'all')
   const [listFilter, setListFilter] = useState('all')
+  const [showAll, setShowAll] = useState(false)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
   const [initGroup,  setInitGroup]  = useState<string | null>(null)
+
+  const effectiveDateFilter = showAll ? 'all' : dateFilter
 
   const listOptions = useMemo(() => {
     const usedIds = new Set(tasks.filter((t) => t.status === cfg.taskStatus).map((t) => t.listId))
@@ -235,16 +240,21 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
     ]
   }, [tasks, lists, cfg.taskStatus])
 
+  // All matching tasks (no date/list filter) — used to compute the hidden count
+  const allMatchingCount = useMemo(() =>
+    tasks.filter((t) => t.status === cfg.taskStatus).length,
+  [tasks, cfg.taskStatus])
+
   const filtered = useMemo(() => {
     const dateField = cfg.dateField
     return tasks
       .filter((t) =>
         t.status === cfg.taskStatus &&
-        passesDateFilter(t[dateField], dateFilter) &&
+        passesDateFilter(t[dateField], effectiveDateFilter) &&
         (listFilter === 'all' || t.listId === listFilter),
       )
       .map((t) => ({ ...t, list: lists.find((l) => l.id === t.listId) })) as Task[]
-  }, [tasks, lists, cfg, dateFilter, listFilter])
+  }, [tasks, lists, cfg, effectiveDateFilter, listFilter])
 
   const groups = useMemo(() => {
     const dateField = cfg.dateField
@@ -256,6 +266,8 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
     }
     return [...map.entries()].sort((a, b) => a[1].sortMs - b[1].sortMs).map(([label, { tasks }]) => ({ label, tasks }))
   }, [filtered, cfg.dateField])
+
+  const hiddenCount = allMatchingCount - filtered.length
 
   function isOpen(label: string): boolean {
     const first = groups[0]?.label
@@ -322,26 +334,43 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
 
       {/* Groups */}
       <div className="flex-1 overflow-y-auto min-h-0 pt-1 pb-6">
-        {groups.length === 0 ? (
+        {groups.length === 0 && hiddenCount === 0 ? (
           <div className="flex flex-1 items-center justify-center py-16">
             <p className="text-[13px] text-text-muted opacity-50">{cfg.emptyMessage}</p>
           </div>
         ) : (
-          groups.map((group) => (
-            <DateGroup
-              key={group.label}
-              label={group.label}
-              tasks={group.tasks}
-              isOpen={isOpen(group.label)}
-              onToggle={() => toggleGroup(group.label)}
-              accentColor={cfg.accentColor}
-              selectedTaskId={selectedTaskId}
-              onSelect={(t) => setSelectedTaskId(t.id)}
-              onAction={handleAction}
+          <>
+            {groups.map((group) => (
+              <DateGroup
+                key={group.label}
+                label={group.label}
+                tasks={group.tasks}
+                isOpen={isOpen(group.label)}
+                onToggle={() => toggleGroup(group.label)}
+                accentColor={cfg.accentColor}
+                selectedTaskId={selectedTaskId}
+                onSelect={(t) => setSelectedTaskId(t.id)}
+                onAction={handleAction}
+                kind={kind}
+              />
+            ))}
 
-              kind={kind}
-            />
-          ))
+            {/* Load more — shown when older tasks are hidden */}
+            {hiddenCount > 0 && !showAll && (
+              <div className="flex items-center justify-between px-5 py-3 mt-1">
+                <span className="text-[12px] text-text-muted opacity-60">
+                  {hiddenCount} older {hiddenCount === 1 ? 'task' : 'tasks'} not shown
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="text-[12px] font-semibold text-accent hover:text-accent-hover transition-colors"
+                >
+                  Load more →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
