@@ -13,9 +13,11 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { useDefaultListView } from '../../hooks/useDefaultListView'
 import { useUrlSync } from '../../hooks/useUrlSync'
 import ToastContainer from '../ui/ToastContainer'
+import EisenhowerMatrix from './EisenhowerMatrix'
 
 export default function AppLayout() {
-  const { mobilePane } = useAppStore()
+  const { mobilePane, selectedView } = useAppStore()
+  const isMatrixView = selectedView === 'matrix'
   const sidebarWidth = useLayoutStore((s) => s.sidebarWidth)
   const taskListWidth = useLayoutStore((s) => s.taskListWidth)
   const setSidebarWidth = useLayoutStore((s) => s.setSidebarWidth)
@@ -96,19 +98,21 @@ export default function AppLayout() {
         <IconRail />
       </div>
 
-      {/* Sidebar — drawer on mobile, resizable column on lg+ */}
-      <div
-        style={isDesktop ? { width: sidebarWidth } : undefined}
-        className={cn(
-          'fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-out lg:relative lg:translate-x-0 lg:z-0 lg:shrink-0',
-          'w-[min(100vw,320px)] lg:w-auto',
-          mobilePane === 'sidebar' ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-        )}
-      >
-        <Sidebar />
-      </div>
+      {/* Sidebar — hidden in matrix view */}
+      {!isMatrixView && (
+        <div
+          style={isDesktop ? { width: sidebarWidth } : undefined}
+          className={cn(
+            'fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-out lg:relative lg:translate-x-0 lg:z-0 lg:shrink-0',
+            'w-[min(100vw,320px)] lg:w-auto',
+            mobilePane === 'sidebar' ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          )}
+        >
+          <Sidebar />
+        </div>
+      )}
 
-      {mobilePane === 'sidebar' && (
+      {!isMatrixView && mobilePane === 'sidebar' && (
         <button
           type="button"
           aria-label="Close navigation"
@@ -117,42 +121,51 @@ export default function AppLayout() {
         />
       )}
 
-      {/* Resizer: sidebar ↔ task list (desktop only) */}
-      <PanelResizer
-        className="hidden lg:block"
-        label="Resize sidebar"
-        onDrag={handleSidebarResize}
-      />
+      {/* Matrix view — full content area, no sidebar/task-list panels */}
+      {isMatrixView ? (
+        <div className="flex flex-1 min-w-0 h-full overflow-hidden">
+          <EisenhowerMatrix />
+        </div>
+      ) : (
+        <>
+          {/* Resizer: sidebar ↔ task list (desktop only) */}
+          <PanelResizer
+            className="hidden lg:block"
+            label="Resize sidebar"
+            onDrag={handleSidebarResize}
+          />
 
-      {/* Task list — resizable on desktop */}
-      <div
-        style={isDesktop ? { width: taskListWidth } : undefined}
-        className={cn(
-          'flex flex-col min-w-0 h-full',
-          'w-full lg:w-auto lg:shrink-0',
-          mobilePane === 'list' ? 'flex' : 'hidden lg:flex',
-        )}
-      >
-        <TaskList />
-      </div>
+          {/* Task list — resizable on desktop */}
+          <div
+            style={isDesktop ? { width: taskListWidth } : undefined}
+            className={cn(
+              'flex flex-col min-w-0 h-full',
+              'w-full lg:w-auto lg:shrink-0',
+              mobilePane === 'list' ? 'flex' : 'hidden lg:flex',
+            )}
+          >
+            <TaskList />
+          </div>
 
-      {/* Resizer: task list ↔ detail (desktop only) */}
-      <PanelResizer
-        className="hidden lg:block"
-        label="Resize task list"
-        onDrag={handleTaskListResize}
-      />
+          {/* Resizer: task list ↔ detail (desktop only) */}
+          <PanelResizer
+            className="hidden lg:block"
+            label="Resize task list"
+            onDrag={handleTaskListResize}
+          />
 
-      {/* Task detail — fills remaining space */}
-      <div
-        className={cn(
-          'flex flex-col min-w-0 h-full flex-1',
-          mobilePane === 'detail' ? 'flex' : 'hidden lg:flex',
-        )}
-        style={{ minWidth: 0 }}
-      >
-        <TaskDetail />
-      </div>
+          {/* Task detail — fills remaining space */}
+          <div
+            className={cn(
+              'flex flex-col min-w-0 h-full flex-1',
+              mobilePane === 'detail' ? 'flex' : 'hidden lg:flex',
+            )}
+            style={{ minWidth: 0 }}
+          >
+            <TaskDetail />
+          </div>
+        </>
+      )}
 
       <SearchModal />
       <ToastContainer />

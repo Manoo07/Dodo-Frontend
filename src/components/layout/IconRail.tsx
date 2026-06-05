@@ -14,13 +14,13 @@ import { useAppStore } from '../../store/useAppStore'
 import { cn } from '../../lib/cn'
 
 const NAV_ITEMS = [
-  { icon: CheckSquare, label: 'Tasks', active: true, action: undefined },
-  { icon: Calendar, label: 'Calendar', action: undefined },
-  { icon: Clock, label: 'Focus', action: undefined },
-  { icon: LayoutGrid, label: 'Matrix', action: undefined },
-  { icon: Target, label: 'Habits', action: undefined },
-  { icon: Star, label: 'Premium', action: undefined },
-  { icon: Search, label: 'Search', action: 'search' as const },
+  { icon: CheckSquare, label: 'Tasks',   action: 'tasks'  as const },
+  { icon: Calendar,    label: 'Calendar', action: undefined },
+  { icon: Clock,       label: 'Focus',    action: undefined },
+  { icon: LayoutGrid,  label: 'Matrix',   action: 'matrix' as const },
+  { icon: Target,      label: 'Habits',   action: undefined },
+  { icon: Star,        label: 'Premium',  action: undefined },
+  { icon: Search,      label: 'Search',   action: 'search' as const },
 ]
 
 const BOTTOM_ITEMS = [
@@ -60,6 +60,14 @@ function RailButton({
 
 export default function IconRail() {
   const setIsSearchOpen = useAppStore((s) => s.setIsSearchOpen)
+  const setSelectedView = useAppStore((s) => s.setSelectedView)
+  const selectedView    = useAppStore((s) => s.selectedView)
+
+  function handleClick(action: 'tasks' | 'matrix' | 'search' | undefined) {
+    if (action === 'search') { setIsSearchOpen(true); return }
+    if (action === 'matrix') { setSelectedView('matrix'); return }
+    if (action === 'tasks')  { setSelectedView('today');  return }
+  }
 
   return (
     <nav
@@ -74,15 +82,21 @@ export default function IconRail() {
       </div>
 
       <div className="flex flex-col items-center gap-0.5 mt-1">
-        {NAV_ITEMS.map((item) => (
-          <RailButton
-            key={item.label}
-            icon={item.icon}
-            label={item.label}
-            active={item.active}
-            onClick={item.action === 'search' ? () => setIsSearchOpen(true) : undefined}
-          />
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const isActive =
+            item.action === 'matrix' ? selectedView === 'matrix' :
+            item.action === 'tasks'  ? selectedView !== 'matrix' :
+            false
+          return (
+            <RailButton
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              active={isActive}
+              onClick={() => handleClick(item.action)}
+            />
+          )
+        })}
       </div>
 
       <div className="flex-1" />

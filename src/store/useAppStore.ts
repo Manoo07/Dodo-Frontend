@@ -3,7 +3,7 @@ import type { NavView } from '../types'
 
 export type MobilePane = 'sidebar' | 'list' | 'detail'
 
-const VALID_VIEWS: NavView[] = ['today', 'next7days', 'inbox', 'completed', 'trash', 'list']
+const VALID_VIEWS: NavView[] = ['today', 'next7days', 'inbox', 'completed', 'trash', 'list', 'matrix']
 
 function readNavFromUrl(): {
   selectedView: NavView
