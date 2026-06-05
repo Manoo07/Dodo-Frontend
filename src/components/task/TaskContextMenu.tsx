@@ -76,19 +76,27 @@ function QuickDateBtn({
       type="button"
       onClick={onClick}
       title={label}
-      className="flex flex-col items-center justify-center gap-1 rounded-xl py-2.5 transition-all text-[10.5px] font-medium"
+      className="flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 px-1 transition-all text-[10.5px] font-medium"
       style={active
-        ? { background: 'rgba(255,255,255,0.14)', color: 'var(--color-text-primary)' }
-        : { color: 'var(--color-text-muted)' }
+        ? {
+            background: 'rgba(255,255,255,0.13)',
+            color: 'var(--color-text-primary)',
+            outline: '1.5px solid rgba(255,255,255,0.22)',
+            outlineOffset: '-1.5px',
+          }
+        : {
+            background: 'rgba(255,255,255,0.05)',
+            color: 'var(--color-text-secondary)',
+          }
       }
-      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent' }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.09)' }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
     >
       <Icon
         className="h-4.5 w-4.5"
         strokeWidth={active ? 2.25 : 1.75}
       />
-      <span style={{ fontWeight: active ? 600 : 500 }}>{label}</span>
+      <span style={{ fontWeight: active ? 600 : 500, letterSpacing: '-0.01em' }}>{label}</span>
     </button>
   )
 }
@@ -108,9 +116,11 @@ function PriorityBtn({
       onClick={onClick}
       className="flex items-center justify-center rounded-xl py-3 transition-all"
       style={active
-        ? { background: color + '28', outline: `2px solid ${color}`, outlineOffset: '-2px' }
-        : { outline: '2px solid transparent', outlineOffset: '-2px' }
+        ? { background: color + '28', outline: `1.5px solid ${color}80`, outlineOffset: '-1.5px' }
+        : { background: 'rgba(255,255,255,0.05)', outline: '1.5px solid transparent', outlineOffset: '-1.5px' }
       }
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.09)' }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
     >
       <Flag
         className="h-5 w-5"
@@ -192,10 +202,10 @@ export default function TaskContextMenu({
         left,
         top,
         width: menuW,
-        background: '#1e1e22',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: '#26262b',
+        border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: 14,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06) inset',
+        boxShadow: '0 16px 48px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.07) inset',
         overflow: 'hidden',
       }}
     >
@@ -286,10 +296,10 @@ export default function TaskContextMenu({
               top: Math.min(submenuPos.top, window.innerHeight - parent.submenuItems.length * 40 - 20),
               left: submenuPos.left,
               width: 200,
-              background: '#1e1e22',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: '#26262b',
+              border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 12,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.55)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
               padding: '6px 6px',
             }}
             onMouseEnter={cancelCloseSubmenu}
