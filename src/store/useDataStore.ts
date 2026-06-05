@@ -701,7 +701,8 @@ export const useDataStore = create<DataState>()((set, get) => ({
         : []
     }
     if (view === 'completed') return tasks.filter((t) => t.status === 'completed').map(withList)
-    if (view === 'trash') return tasks.filter((t) => t.status === 'deleted').map(withList)
+    if (view === 'wontdo')    return tasks.filter((t) => t.status === 'wont_do').map(withList)
+    if (view === 'trash')     return tasks.filter((t) => t.status === 'deleted').map(withList)
     if (view === 'matrix')
       return tasks
         .filter((t) => t.status !== 'deleted' && !t.parentId)

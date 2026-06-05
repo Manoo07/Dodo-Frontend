@@ -14,10 +14,15 @@ import { useDefaultListView } from '../../hooks/useDefaultListView'
 import { useUrlSync } from '../../hooks/useUrlSync'
 import ToastContainer from '../ui/ToastContainer'
 import EisenhowerMatrix from './EisenhowerMatrix'
+import StatusTaskView from './StatusTaskView'
 
 export default function AppLayout() {
   const { mobilePane, selectedView } = useAppStore()
   const isMatrixView = selectedView === 'matrix'
+  const statusView =
+    selectedView === 'completed' ? 'completed' :
+    selectedView === 'wontdo'    ? 'wontdo'    :
+    selectedView === 'trash'     ? 'trash'     : null
   const sidebarWidth = useLayoutStore((s) => s.sidebarWidth)
   const taskListWidth = useLayoutStore((s) => s.taskListWidth)
   const setSidebarWidth = useLayoutStore((s) => s.setSidebarWidth)
@@ -144,7 +149,10 @@ export default function AppLayout() {
               mobilePane === 'list' ? 'flex' : 'hidden lg:flex',
             )}
           >
-            <TaskList />
+            {statusView
+              ? <StatusTaskView kind={statusView} />
+              : <TaskList />
+            }
           </div>
 
           {/* Resizer: task list ↔ detail (desktop only) */}

@@ -7,6 +7,7 @@ import {
   Sun,
   CalendarRange,
   CheckCircle2,
+  XCircle,
   Edit2,
   Trash2,
   Tag,
@@ -556,6 +557,12 @@ export default function Sidebar() {
               label="Completed"
               active={isNavActive('completed')}
               onClick={() => handleNavClick('completed')}
+            />
+            <NavButton
+              icon={XCircle}
+              label="Won't Do"
+              active={isNavActive('wontdo')}
+              onClick={() => handleNavClick('wontdo')}
             />
             <NavButton
               icon={Trash2}

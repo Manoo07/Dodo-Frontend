@@ -85,7 +85,7 @@ export interface Section {
   _count?: { tasks: number }
 }
 
-export type NavView = 'today' | 'next7days' | 'inbox' | 'completed' | 'trash' | 'list' | 'matrix'
+export type NavView = 'today' | 'next7days' | 'inbox' | 'completed' | 'wontdo' | 'trash' | 'list' | 'matrix'
 
 export interface CreateTaskPayload {
   title: string
