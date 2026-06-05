@@ -13,19 +13,22 @@ import {
 import { useAppStore } from '../../store/useAppStore'
 import { cn } from '../../lib/cn'
 
-const NAV_ITEMS = [
-  { icon: CheckSquare, label: 'Tasks',   action: 'tasks'  as const },
-  { icon: Calendar,    label: 'Calendar', action: undefined },
-  { icon: Clock,       label: 'Focus',    action: undefined },
-  { icon: LayoutGrid,  label: 'Matrix',   action: 'matrix' as const },
-  { icon: Target,      label: 'Habits',   action: undefined },
-  { icon: Star,        label: 'Premium',  action: undefined },
-  { icon: Search,      label: 'Search',   action: 'search' as const },
+type Action = 'tasks' | 'matrix' | 'search' | null
+
+// Top 4 are navigable; rest are placeholders / not yet built
+const NAV_ITEMS: { icon: typeof CheckSquare; label: string; action: Action; soon?: boolean }[] = [
+  { icon: CheckSquare, label: 'Tasks',   action: 'tasks'  },
+  { icon: Calendar,    label: 'Calendar', action: null, soon: true },
+  { icon: Clock,       label: 'Focus',    action: null, soon: true },
+  { icon: LayoutGrid,  label: 'Matrix',   action: 'matrix' },
+  { icon: Target,      label: 'Habits',   action: null, soon: true },
+  { icon: Star,        label: 'Premium',  action: null },
+  { icon: Search,      label: 'Search',   action: 'search' },
 ]
 
 const BOTTOM_ITEMS = [
   { icon: RefreshCw, label: 'Sync' },
-  { icon: Bell, label: 'Notifications' },
+  { icon: Bell,      label: 'Notifications' },
   { icon: HelpCircle, label: 'Help' },
 ]
 
@@ -33,11 +36,13 @@ function RailButton({
   icon: Icon,
   label,
   active,
+  disabled,
   onClick,
 }: {
   icon: typeof CheckSquare
   label: string
   active?: boolean
+  disabled?: boolean
   onClick?: () => void
 }) {
   return (
@@ -45,15 +50,22 @@ function RailButton({
       type="button"
       title={label}
       aria-label={label}
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       className={cn(
-        'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
-        active
-          ? 'bg-bg-hover text-text-primary'
-          : 'text-text-muted hover:bg-bg-surface hover:text-text-secondary',
+        'relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+        active && 'bg-accent/15 text-accent',
+        !active && !disabled && 'text-text-muted hover:bg-bg-surface hover:text-text-secondary cursor-pointer',
+        disabled && 'text-text-muted opacity-30 cursor-not-allowed',
       )}
     >
-      <Icon className="nav-icon" strokeWidth={1.8} />
+      {/* Active indicator — left accent bar */}
+      {active && (
+        <span
+          className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full"
+          style={{ width: 3, height: 18, background: 'var(--color-accent)' }}
+        />
+      )}
+      <Icon className="nav-icon" strokeWidth={active ? 2 : 1.8} />
     </button>
   )
 }
@@ -63,7 +75,7 @@ export default function IconRail() {
   const setSelectedView = useAppStore((s) => s.setSelectedView)
   const selectedView    = useAppStore((s) => s.selectedView)
 
-  function handleClick(action: 'tasks' | 'matrix' | 'search' | undefined) {
+  function handleClick(action: Action) {
     if (action === 'search') { setIsSearchOpen(true); return }
     if (action === 'matrix') { setSelectedView('matrix'); return }
     if (action === 'tasks')  { setSelectedView('today');  return }
@@ -93,6 +105,7 @@ export default function IconRail() {
               icon={item.icon}
               label={item.label}
               active={isActive}
+              disabled={item.action === null}
               onClick={() => handleClick(item.action)}
             />
           )
@@ -103,7 +116,7 @@ export default function IconRail() {
 
       <div className="flex flex-col items-center gap-0.5 pb-3">
         {BOTTOM_ITEMS.map((item) => (
-          <RailButton key={item.label} icon={item.icon} label={item.label} />
+          <RailButton key={item.label} icon={item.icon} label={item.label} disabled />
         ))}
       </div>
     </nav>
