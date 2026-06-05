@@ -160,6 +160,25 @@ export default function TaskItem({
           {task.title}
         </span>
 
+        {task.tags.length > 0 && (
+          <div className="flex items-center gap-1 shrink-0">
+            <span
+              className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium leading-none"
+              style={{
+                backgroundColor: task.tags[0].tag.color + '22',
+                color: task.tags[0].tag.color,
+              }}
+            >
+              {task.tags[0].tag.name}
+            </span>
+            {task.tags.length > 1 && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium leading-none bg-bg-surface text-text-muted">
+                +{task.tags.length - 1}
+              </span>
+            )}
+          </div>
+        )}
+
         {dueDate && (
           <span
             className={cn(
