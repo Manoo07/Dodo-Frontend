@@ -567,7 +567,7 @@ export default function TaskList() {
         </>
       )}
 
-      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto px-0 pt-0.5 pb-4">
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto px-0 pt-2 pb-6">
         {flatTasks.length === 0 && !showAddSection ? (
           <div className="flex flex-1 items-center justify-center py-12">
             <EmptyState

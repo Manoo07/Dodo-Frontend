@@ -35,11 +35,11 @@
   --color-priority-p3: #5b9bd5;
   --color-priority-p4: #636369;
 
-  /* Spacing tokens — compact density */
-  --spacing-panel-x: 1rem;
-  --spacing-panel-y: 0.625rem;
-  --spacing-section-gap: 0.25rem;
-  --spacing-card-inner: 0.5rem;
+  /* Spacing tokens */
+  --spacing-panel-x: 1.25rem;
+  --spacing-panel-y: 0.875rem;
+  --spacing-section-gap: 0.375rem;
+  --spacing-card-inner: 0.625rem;
 }
 
 * {
@@ -64,13 +64,13 @@ body,
 /* ── Panel header ── */
 .panel-header {
   padding: var(--spacing-panel-y) var(--spacing-panel-x);
-  min-height: 2.75rem;
+  min-height: 3.25rem;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .list-panel-title {
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.25;
 }
@@ -176,15 +176,15 @@ body,
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  height: 34px;
-  min-height: 34px;
-  max-height: 34px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
   padding-top: 0;
   padding-bottom: 0;
-  padding-right: 8px;
-  margin-left: 4px;
-  margin-right: 4px;
-  border-radius: 6px;
+  padding-right: 10px;
+  margin-left: 6px;
+  margin-right: 6px;
+  border-radius: 7px;
   font-size: 14px;
   font-weight: 400;
   line-height: 1;
@@ -211,9 +211,9 @@ body,
   align-items: center;
   gap: 0.375rem;
   width: 100%;
-  height: 28px;
-  min-height: 28px;
-  padding: 8px 16px 4px;
+  height: 36px;
+  min-height: 36px;
+  padding: 10px 18px 6px;
   margin: 0;
   text-align: left;
   transition: background-color 0.12s;
@@ -243,7 +243,7 @@ body,
 
 /* ── Add task input ── */
 .add-task-bar-wrap {
-  padding: 4px 12px 6px;
+  padding: 8px 16px 10px;
   flex-shrink: 0;
 }
 
@@ -251,9 +251,9 @@ body,
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 9px;
   border: 1px solid var(--color-border);
   transition: border-color 0.15s, background-color 0.15s;
 }
