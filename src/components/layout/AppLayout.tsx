@@ -11,6 +11,7 @@ import SearchModal from './SearchModal'
 import PanelResizer from './PanelResizer'
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { useDefaultListView } from '../../hooks/useDefaultListView'
+import { useUrlSync } from '../../hooks/useUrlSync'
 import ToastContainer from '../ui/ToastContainer'
 
 export default function AppLayout() {
@@ -27,6 +28,7 @@ export default function AppLayout() {
 
   useKeyboardShortcuts()
   useDefaultListView()
+  useUrlSync()
 
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,

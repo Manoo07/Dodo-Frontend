@@ -3,6 +3,34 @@ import type { NavView } from '../types'
 
 export type MobilePane = 'sidebar' | 'list' | 'detail'
 
+const VALID_VIEWS: NavView[] = ['today', 'next7days', 'inbox', 'completed', 'trash', 'list']
+
+function readNavFromUrl(): {
+  selectedView: NavView
+  selectedListId: string | null
+  selectedTagId: string | null
+  selectedTaskId: string | null
+} {
+  try {
+    const p = new URLSearchParams(window.location.search)
+    const v    = p.get('v')
+    const list = p.get('l')
+    const tag  = p.get('t')
+    const task = p.get('task')
+    if (tag)
+      return { selectedView: 'today', selectedListId: null, selectedTagId: tag, selectedTaskId: task }
+    if (v === 'list' && list)
+      return { selectedView: 'list', selectedListId: list, selectedTagId: null, selectedTaskId: task }
+    if (v && VALID_VIEWS.includes(v as NavView))
+      return { selectedView: v as NavView, selectedListId: null, selectedTagId: null, selectedTaskId: task }
+  } catch {
+    // SSR / non-browser env — fall through to defaults
+  }
+  return { selectedView: 'today', selectedListId: null, selectedTagId: null, selectedTaskId: null }
+}
+
+const urlNav = readNavFromUrl()
+
 interface AppState {
   selectedView: NavView
   selectedListId: string | null
@@ -22,10 +50,10 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  selectedView: 'today',
-  selectedListId: null,
-  selectedTaskId: null,
-  selectedTagId: null,
+  selectedView: urlNav.selectedView,
+  selectedListId: urlNav.selectedListId,
+  selectedTaskId: urlNav.selectedTaskId,
+  selectedTagId: urlNav.selectedTagId,
   searchQuery: '',
   isSearchOpen: false,
   mobilePane: 'list',
