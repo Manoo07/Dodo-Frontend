@@ -132,8 +132,8 @@ function StatusTaskRow({ task, isSelected, onSelect, onAction, kind }: {
   return (
     <div
       className={cn(
-        'flex items-center gap-2.5 cursor-pointer transition-colors',
-        'hover:bg-white/4 rounded-md mx-2 px-3',
+        'flex items-center gap-2.5 cursor-pointer transition-colors px-3',
+        'hover:bg-white/4',
         isSelected && 'bg-white/6',
       )}
       style={{ height: 40, minHeight: 40 }}
@@ -175,36 +175,31 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
   kind: StatusViewKind
 }) {
   return (
-    <div className="mb-4">
-      {/* Section header band */}
+    // Left border spans the ENTIRE group (header + task rows)
+    <div
+      className="mb-3"
+      style={{ borderLeft: `4px solid ${accentColor}` }}
+    >
+      {/* Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2.5 text-left transition-colors"
-        style={{
-          borderLeft: `4px solid ${accentColor}`,
-          background: accentColor + '14',
-          padding: '8px 16px 8px 14px',
-        }}
+        className="w-full flex items-center gap-2 text-left px-3 py-2 transition-colors hover:bg-white/4"
       >
         <ChevronDown
           className="h-3.5 w-3.5 shrink-0 transition-transform duration-150"
-          style={{
-            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-            color: accentColor,
-            opacity: 0.8,
-          }}
+          style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)', color: accentColor }}
           strokeWidth={2.5}
         />
         <span
-          className="flex-1 text-[13.5px] font-bold leading-none"
+          className="flex-1 text-[13.5px] font-bold"
           style={{ color: accentColor }}
         >
           {label}
         </span>
         <span
-          className="text-[11px] font-bold tabular-nums px-2 py-0.5 rounded-full"
-          style={{ background: accentColor + '30', color: accentColor }}
+          className="text-[12px] font-semibold tabular-nums"
+          style={{ color: accentColor, opacity: 0.7 }}
         >
           {tasks.length}
         </span>
@@ -212,10 +207,7 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
 
       {/* Task rows */}
       {isOpen && (
-        <div
-          className="py-1"
-          style={{ borderLeft: `4px solid ${accentColor}22` }}
-        >
+        <div className="pb-1">
           {tasks.map((task) => (
             <StatusTaskRow
               key={task.id}
