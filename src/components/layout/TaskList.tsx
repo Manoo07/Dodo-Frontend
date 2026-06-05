@@ -34,6 +34,29 @@ function flattenTree(tasks: Task[], depth = 0, expandedIds: Set<string>): { task
   return result
 }
 
+/** Recursively collect every task ID that has children (all depths). */
+function collectExpandableIds(tasks: Task[], ids = new Set<string>()): Set<string> {
+  for (const task of tasks) {
+    if (task.children?.length) {
+      ids.add(task.id)
+      collectExpandableIds(task.children, ids)
+    }
+  }
+  return ids
+}
+
+/** Return the list of ancestor IDs from root down to (but not including) targetId. */
+function findAncestorIds(targetId: string, tasks: Task[], path: string[] = []): string[] | null {
+  for (const task of tasks) {
+    if (task.id === targetId) return path
+    if (task.children?.length) {
+      const found = findAncestorIds(targetId, task.children, [...path, task.id])
+      if (found) return found
+    }
+  }
+  return null
+}
+
 function getViewTitle(view: string, listName?: string, tagName?: string): string {
   if (tagName) return `#${tagName}`
   if (view === 'today') return 'Today'
@@ -139,15 +162,23 @@ export default function TaskList() {
   // React re-renders immediately when setState is called during render, so there's
   // no extra paint cycle — unlike useEffect which always runs after the first paint.
 
-  const navKey = `${selectedView}:${selectedListId ?? ''}:${selectedTagId ?? ''}`
-  const [prevNavKey, setPrevNavKey] = useState(navKey)
-  if (navKey !== prevNavKey) {
-    setPrevNavKey(navKey)
-    const ids = new Set<string>()
-    for (const task of tasks) {
-      if (task.children?.length) ids.add(task.id)
+  // Include hydration in the key so the block fires when data first loads,
+  // not just when the user navigates (navKey alone is the same on hard refresh).
+  const navKey   = `${selectedView}:${selectedListId ?? ''}:${selectedTagId ?? ''}`
+  const expandKey = hydrated ? navKey : `__pending:${navKey}`
+  const [prevExpandKey, setPrevExpandKey] = useState(expandKey)
+  if (expandKey !== prevExpandKey) {
+    setPrevExpandKey(expandKey)
+    if (hydrated) {
+      const ids = collectExpandableIds(tasks)
+      // On first load, also expand every ancestor of the URL-restored selected task
+      // so the user lands exactly where they left off.
+      if (selectedTaskId) {
+        const ancestors = findAncestorIds(selectedTaskId, tasks)
+        if (ancestors) ancestors.forEach((id) => ids.add(id))
+      }
+      setExpandedIds(ids)
     }
-    setExpandedIds(ids)
   }
 
   const sectionsKey = `${selectedListId ?? ''}:${sections.length}`
