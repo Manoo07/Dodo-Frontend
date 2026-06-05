@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Printer, Trash2 } from 'lucide-react'
+import { ChevronDown, Printer, Trash2, Menu } from 'lucide-react'
 import { useDataStore } from '../../store/useDataStore'
 import { useAppStore } from '../../store/useAppStore'
 import TaskCheckbox from '../ui/TaskCheckbox'
@@ -90,11 +90,11 @@ function FilterDropdown({ value, options, onChange }: {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium text-text-secondary hover:bg-bg-hover transition-colors"
-        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium text-text-secondary hover:bg-bg-hover transition-colors"
+        style={{ border: '1px solid rgba(255,255,255,0.12)' }}
       >
         {current?.label}
-        <ChevronDown className="h-3 w-3 text-text-muted" strokeWidth={2} />
+        <ChevronDown className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
       </button>
       {open && (
         <>
@@ -132,29 +132,29 @@ function StatusTaskRow({ task, isSelected, onSelect, onAction, kind }: {
   return (
     <div
       className={cn(
-        'flex items-center gap-2.5 cursor-pointer transition-colors px-3',
+        'flex items-center gap-3 cursor-pointer transition-colors px-5',
         'hover:bg-white/4',
         isSelected && 'bg-white/6',
       )}
-      style={{ height: 40, minHeight: 40 }}
+      style={{ minHeight: 48, borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       onClick={onSelect}
     >
       <TaskCheckbox
         checked={kind !== 'trash'}
         priority={task.priority}
-        size="sm"
+        size="md"
         onClick={(e) => { e.stopPropagation(); onAction(task.id) }}
       />
       <span className={cn(
-        'flex-1 min-w-0 truncate text-[13.5px] font-normal',
+        'flex-1 min-w-0 truncate text-[14px]',
         kind !== 'trash' ? 'line-through text-text-muted' : 'text-text-primary',
       )}>
         {task.title}
       </span>
       {task.list && (
-        <span className="shrink-0 flex items-center gap-1 text-[11.5px] text-text-muted opacity-50">
-          {task.list.icon && <span className="text-[12px]">{task.list.icon}</span>}
-          <span className="truncate max-w-27.5">{task.list.name}</span>
+        <span className="shrink-0 flex items-center gap-1 text-[12px] text-text-muted opacity-60">
+          {task.list.icon && <span>{task.list.icon}</span>}
+          <span className="truncate max-w-30">{task.list.name}</span>
         </span>
       )}
     </div>
@@ -175,39 +175,25 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
   kind: StatusViewKind
 }) {
   return (
-    // Left border spans the ENTIRE group (header + task rows)
-    <div
-      className="mb-3"
-      style={{ borderLeft: `4px solid ${accentColor}` }}
-    >
-      {/* Header */}
+    <div className="mb-1">
+      {/* Header — plain white, no accent tint */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2 text-left px-3 py-2 transition-colors hover:bg-white/4"
+        className="w-full flex items-center gap-2.5 text-left px-5 py-3 transition-colors hover:bg-white/4"
       >
         <ChevronDown
-          className="h-3.5 w-3.5 shrink-0 transition-transform duration-150"
-          style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)', color: accentColor }}
-          strokeWidth={2.5}
+          className="h-4 w-4 text-text-muted shrink-0 transition-transform duration-150"
+          style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+          strokeWidth={2}
         />
-        <span
-          className="flex-1 text-[13.5px] font-bold"
-          style={{ color: accentColor }}
-        >
-          {label}
-        </span>
-        <span
-          className="text-[12px] font-semibold tabular-nums"
-          style={{ color: accentColor, opacity: 0.7 }}
-        >
-          {tasks.length}
-        </span>
+        <span className="flex-1 text-[14px] font-bold text-text-primary">{label}</span>
+        <span className="text-[13px] font-medium text-text-muted tabular-nums">{tasks.length}</span>
       </button>
 
-      {/* Task rows */}
+      {/* Task rows — left border here only */}
       {isOpen && (
-        <div className="pb-1">
+        <div style={{ borderLeft: `4px solid ${accentColor}` }}>
           {tasks.map((task) => (
             <StatusTaskRow
               key={task.id}
@@ -325,7 +311,17 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
     <div className="flex flex-col h-full w-full bg-bg-primary overflow-hidden">
       {/* Header */}
       <div className="panel-header flex items-center justify-between gap-2 px-5">
-        <h2 className="list-panel-title text-text-primary">{cfg.title}</h2>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => useAppStore.getState().setMobilePane('sidebar')}
+            className="icon-btn lg:hidden shrink-0"
+            aria-label="Open navigation"
+          >
+            <Menu className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+          <h2 className="list-panel-title text-text-primary">{cfg.title}</h2>
+        </div>
         <div className="flex items-center gap-1">
           {cfg.actionIcon === 'print' && (
             <button type="button" className="icon-btn text-text-muted" title="Print" onClick={() => window.print()}>
@@ -347,7 +343,7 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
 
       {/* Filters */}
       {cfg.showFilters && (
-        <div className="flex items-center gap-2 px-5 py-2 shrink-0">
+        <div className="flex items-center gap-3 px-5 py-3 shrink-0">
           <FilterDropdown value={dateFilter} options={DATE_FILTER_OPTIONS} onChange={setDateFilter} />
           <FilterDropdown value={listFilter} options={listOptions} onChange={setListFilter} />
         </div>
