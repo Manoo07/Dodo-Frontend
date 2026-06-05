@@ -131,8 +131,12 @@ function StatusTaskRow({ task, isSelected, onSelect, onAction, kind }: {
 }) {
   return (
     <div
-      className={cn('flex items-center gap-2 px-4 cursor-pointer transition-colors hover:bg-white/4', isSelected && 'bg-white/6')}
-      style={{ height: 38, minHeight: 38 }}
+      className={cn(
+        'flex items-center gap-2.5 cursor-pointer transition-colors',
+        'hover:bg-white/4 rounded-lg mx-3 px-3',
+        isSelected && 'bg-white/6',
+      )}
+      style={{ height: 40, minHeight: 40 }}
       onClick={onSelect}
     >
       <TaskCheckbox
@@ -141,13 +145,16 @@ function StatusTaskRow({ task, isSelected, onSelect, onAction, kind }: {
         size="sm"
         onClick={(e) => { e.stopPropagation(); onAction(task.id) }}
       />
-      <span className={cn('flex-1 min-w-0 truncate text-[13.5px]', kind !== 'trash' ? 'line-through text-text-muted' : 'text-text-secondary')}>
+      <span className={cn(
+        'flex-1 min-w-0 truncate text-[13.5px] font-normal',
+        kind !== 'trash' ? 'line-through text-text-muted' : 'text-text-primary',
+      )}>
         {task.title}
       </span>
       {task.list && (
-        <span className="shrink-0 flex items-center gap-1 text-[11px] text-text-muted opacity-55">
-          {task.list.icon && <span>{task.list.icon}</span>}
-          <span className="truncate max-w-[100px]">{task.list.name}</span>
+        <span className="shrink-0 flex items-center gap-1 text-[11.5px] text-text-muted opacity-50">
+          {task.list.icon && <span className="text-[12px]">{task.list.icon}</span>}
+          <span className="truncate max-w-27.5">{task.list.name}</span>
         </span>
       )}
     </div>
@@ -165,27 +172,39 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
   selectedTaskId: string | null
   onSelect: (t: Task) => void
   onAction: (id: string) => void
-
   kind: StatusViewKind
 }) {
   return (
-    <div className="mb-0.5">
+    <div className="mb-3">
+      {/* Header — full-width with accent left bar */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-white/4 transition-colors"
-        style={{ borderLeft: `2.5px solid ${accentColor}` }}
+        className="w-full flex items-center gap-2.5 px-5 py-1.5 text-left transition-colors hover:bg-white/3 group"
+        style={{ borderLeft: `3px solid ${accentColor}`, paddingLeft: 18 }}
       >
         <ChevronDown
           className="h-3.5 w-3.5 text-text-muted shrink-0 transition-transform duration-150"
           style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-          strokeWidth={1.75}
+          strokeWidth={2}
         />
-        <span className="text-[13px] font-semibold text-text-primary flex-1">{label}</span>
-        <span className="text-[11.5px] font-medium text-text-muted">{tasks.length}</span>
+        <span className="text-[13px] font-semibold text-text-primary flex-1 leading-none py-1">
+          {label}
+        </span>
+        <span
+          className="text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md"
+          style={{
+            background: accentColor + '1a',
+            color: accentColor,
+          }}
+        >
+          {tasks.length}
+        </span>
       </button>
+
+      {/* Task rows — indented to line up with header text */}
       {isOpen && (
-        <div style={{ borderLeft: '2.5px solid rgba(255,255,255,0.05)' }}>
+        <div className="mt-0.5 mb-1">
           {tasks.map((task) => (
             <StatusTaskRow
               key={task.id}
@@ -194,7 +213,6 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
               isSelected={selectedTaskId === task.id}
               onSelect={() => onSelect(task)}
               onAction={onAction}
-
             />
           ))}
         </div>
