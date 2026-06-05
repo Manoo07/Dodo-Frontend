@@ -689,9 +689,20 @@ export const useDataStore = create<DataState>()((set, get) => ({
     if (view === 'list' && listId)
       return buildTree(tasks.filter((t) => t.listId === listId && t.status !== 'deleted'), null)
     if (view === 'today')
-      return tasks.filter((t) => t.status !== 'deleted' && isToday(t.dueDate)).map(withList)
+      return tasks
+        .filter((t) => t.status !== 'deleted' && isToday(t.dueDate))
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map(withList)
     if (view === 'next7days')
-      return tasks.filter((t) => t.status !== 'deleted' && isWithin7Days(t.dueDate)).map(withList)
+      return tasks
+        .filter((t) => t.status !== 'deleted' && isWithin7Days(t.dueDate))
+        .sort((a, b) => {
+          const da = a.dueDate ? new Date(a.dueDate).getTime() : Infinity
+          const db = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
+          if (da !== db) return da - db          // earlier date first
+          return (a.order ?? 0) - (b.order ?? 0) // same day → preserve original order
+        })
+        .map(withList)
     if (view === 'inbox') {
       const inbox = lists.find((l) => l.name.toLowerCase() === 'inbox')
       return inbox
