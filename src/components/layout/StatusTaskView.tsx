@@ -122,12 +122,11 @@ function FilterDropdown({ value, options, onChange }: {
 
 // ── Task row ──────────────────────────────────────────────────────────────────
 
-function StatusTaskRow({ task, isSelected, onSelect, onAction, actionLabel, kind }: {
+function StatusTaskRow({ task, isSelected, onSelect, onAction, kind }: {
   task: Task
   isSelected: boolean
   onSelect: () => void
   onAction: (id: string) => void
-  actionLabel: string
   kind: StatusViewKind
 }) {
   return (
@@ -157,7 +156,7 @@ function StatusTaskRow({ task, isSelected, onSelect, onAction, actionLabel, kind
 
 // ── Date group ────────────────────────────────────────────────────────────────
 
-function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId, onSelect, onAction, actionLabel, kind }: {
+function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId, onSelect, onAction, kind }: {
   label: string
   tasks: Task[]
   isOpen: boolean
@@ -166,7 +165,7 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
   selectedTaskId: string | null
   onSelect: (t: Task) => void
   onAction: (id: string) => void
-  actionLabel: string
+
   kind: StatusViewKind
 }) {
   return (
@@ -195,7 +194,7 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
               isSelected={selectedTaskId === task.id}
               onSelect={() => onSelect(task)}
               onAction={onAction}
-              actionLabel={actionLabel}
+
             />
           ))}
         </div>
@@ -220,7 +219,6 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
   const lists          = useDataStore((s) => s.lists)
   const toggleComplete = useDataStore((s) => s.toggleComplete)
   const restoreTask    = useDataStore((s) => s.restoreTask)
-  const permanentDeleteTask = useDataStore((s) => s.permanentDeleteTask)
   const emptyTrash     = useDataStore((s) => s.emptyTrash)
   const { selectedTaskId, setSelectedTaskId } = useAppStore()
 
@@ -340,7 +338,7 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
               selectedTaskId={selectedTaskId}
               onSelect={(t) => setSelectedTaskId(t.id)}
               onAction={handleAction}
-              actionLabel={kind === 'trash' ? 'Restore' : 'Un-complete'}
+
               kind={kind}
             />
           ))

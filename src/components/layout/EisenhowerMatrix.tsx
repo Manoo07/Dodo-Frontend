@@ -141,7 +141,6 @@ function MatrixTaskRow({
 // ── Single quadrant panel ─────────────────────────────────────────────────────
 
 function Quadrant({
-  id,
   priority,
   label,
   color,
@@ -151,7 +150,6 @@ function Quadrant({
   onSelect,
   onToggleComplete,
 }: {
-  id: string
   priority: Priority
   label: string
   color: string
