@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronRight, Flag, AlertCircle, Calendar, ListTree, GripVertical } from 'lucide-react'
+import { ChevronRight, Flag, AlertCircle, Calendar, Clock, ListTree, GripVertical } from 'lucide-react'
 import type { Task } from '../../types'
 import TaskContextMenu from './TaskContextMenu'
 import { buildTaskMenuItems } from './taskMenuBuilder'
@@ -180,21 +180,30 @@ export default function TaskItem({
         )}
 
         {dueDate && (
-          <span
-            className={cn(
-              'shrink-0 inline-flex items-center gap-1 text-[11px] font-medium',
-              isOverdue && 'text-priority-p1',
-              isDueToday && !isOverdue && 'text-accent',
-              !isOverdue && !isDueToday && 'text-text-muted opacity-70',
-            )}
-          >
-            {isOverdue ? (
-              <AlertCircle className="h-4 w-4" strokeWidth={2} />
-            ) : (
-              <Calendar className="h-4 w-4" strokeWidth={2} />
-            )}
-            {formatDueDate(dueDate)}
-          </span>
+          isCompleted || isWontDo ? (
+            <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-text-muted opacity-35">
+              <Calendar className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {formatDueDate(dueDate)}
+            </span>
+          ) : isOverdue ? (
+            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11.5px] font-semibold text-priority-p1 bg-priority-p1/12 border border-priority-p1/25">
+              <AlertCircle className="h-3.5 w-3.5" strokeWidth={2.5} />
+              {formatDueDate(dueDate)}
+            </span>
+          ) : isDueToday ? (
+            <span
+              className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11.5px] font-semibold"
+              style={{ color: '#f97316', background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.25)' }}
+            >
+              <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+              Today
+            </span>
+          ) : (
+            <span className="shrink-0 inline-flex items-center gap-1 text-[11px] text-text-muted opacity-70">
+              <Calendar className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {formatDueDate(dueDate)}
+            </span>
+          )
         )}
 
         {hasChildren && (
