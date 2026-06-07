@@ -188,7 +188,7 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
 
   return (
     // [Ticket #1] Left accent bar spans full group (header + rows)
-    <div className="mt-4 mb-2" style={{ borderLeft: `3px solid ${accentColor}` }}>
+    <div className="mt-4 mb-4" style={{ borderLeft: `3px solid ${accentColor}` }}>
       <button
         type="button"
         onClick={onToggle}
