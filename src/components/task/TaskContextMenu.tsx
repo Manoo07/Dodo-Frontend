@@ -76,7 +76,7 @@ function QuickDateBtn({
       type="button"
       onClick={onClick}
       title={label}
-      className="flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 px-1 transition-all text-[10.5px] font-medium"
+      className="flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-1 transition-all text-[10.5px] font-medium"
       style={active
         ? {
             background: 'rgba(255,255,255,0.13)',
@@ -211,7 +211,7 @@ export default function TaskContextMenu({
     >
       {/* ── Quick date ── */}
       {onSetDate && (
-        <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '20px 14px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <SectionLabel>Date</SectionLabel>
           <div className="grid grid-cols-4 gap-1.5">
             <QuickDateBtn icon={Sun}         label="Today"    active={isSameDay(task?.dueDate, today)}    onClick={() => { onSetDate(toDateISO(new Date())); onClose() }} />
