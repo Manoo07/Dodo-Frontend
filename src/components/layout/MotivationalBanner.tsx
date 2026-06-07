@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ChevronUp, ChevronDown, Sparkles } from 'lucide-react'
+import { ChevronUp, ChevronDown, Sparkles, X } from 'lucide-react'
 
 const QUOTES = [
   { text: '"The secret of getting ahead is getting started."', author: '— Mark Twain', color: '#7c3aed' },
@@ -13,11 +13,15 @@ const QUOTES = [
 
 const INTERVAL_MS = 4500
 
+type BannerState = 'expanded' | 'collapsed' | 'closed'
+
+function readState(): BannerState {
+  try { return (localStorage.getItem('tasknest-banner') as BannerState) ?? 'expanded' } catch { return 'expanded' }
+}
+
 export default function MotivationalBanner() {
+  const [bannerState, setBannerState] = useState<BannerState>(readState)
   const [idx, setIdx] = useState(0)
-  const [collapsed, setCollapsed] = useState(() => {
-    try { return localStorage.getItem('tasknest-banner-collapsed') === 'true' } catch { return false }
-  })
   const [animKey, setAnimKey] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -30,17 +34,17 @@ export default function MotivationalBanner() {
   }, [])
 
   useEffect(() => {
-    if (!collapsed) {
+    if (bannerState === 'expanded') {
       startTimer()
     } else {
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [collapsed, startTimer])
+  }, [bannerState, startTimer])
 
   useEffect(() => {
-    try { localStorage.setItem('tasknest-banner-collapsed', String(collapsed)) } catch {}
-  }, [collapsed])
+    try { localStorage.setItem('tasknest-banner', bannerState) } catch {}
+  }, [bannerState])
 
   function goTo(n: number) {
     setIdx(n)
@@ -48,49 +52,79 @@ export default function MotivationalBanner() {
     startTimer()
   }
 
+  if (bannerState === 'closed') return null
+
   const q = QUOTES[idx]
 
   return (
     <div
       className="shrink-0 border-b border-border overflow-hidden relative"
       style={{
-        height: collapsed ? 28 : 72,
-        transition: 'height 0.25s ease',
+        height: bannerState === 'collapsed' ? 26 : 60,
+        transition: 'height 0.22s ease',
         background: 'var(--color-bg-elevated)',
       }}
     >
-      {collapsed ? (
-        /* Slim bar */
-        <button
-          type="button"
-          className="w-full h-7 flex items-center gap-2 px-4 transition-colors hover:bg-white/3"
-          onClick={() => setCollapsed(false)}
-        >
-          <Sparkles className="h-3 w-3 shrink-0 text-text-muted" strokeWidth={1.75} />
-          <span className="text-[11px] text-text-muted">Daily motivation</span>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-muted ml-auto" strokeWidth={1.75} />
-        </button>
-      ) : (
-        <>
-          {/* Label */}
-          <span className="absolute top-1.5 left-4 text-[9px] font-semibold uppercase tracking-widest text-text-muted opacity-40 pointer-events-none select-none">
+      {bannerState === 'collapsed' ? (
+        /* ── Slim bar ── */
+        <div className="flex items-center h-full gap-2 px-3">
+          <Sparkles className="h-3 w-3 shrink-0 text-text-muted opacity-50" strokeWidth={1.75} />
+          <button
+            type="button"
+            className="flex-1 text-left text-[11px] text-text-muted opacity-50 hover:opacity-80 transition-opacity truncate"
+            onClick={() => setBannerState('expanded')}
+          >
             Daily motivation
-          </span>
-
+          </button>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              title="Expand"
+              onClick={() => setBannerState('expanded')}
+              className="flex items-center justify-center text-text-muted opacity-40 hover:opacity-70 transition-opacity"
+              style={{ width: 20, height: 20 }}
+            >
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              title="Close"
+              onClick={() => setBannerState('closed')}
+              className="flex items-center justify-center text-text-muted opacity-40 hover:opacity-70 transition-opacity"
+              style={{ width: 20, height: 20 }}
+            >
+              <X className="h-3 w-3" strokeWidth={1.75} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ── Full banner ── */
+        <>
           {/* Quote row */}
-          <div className="flex items-center h-full px-4 pr-10" style={{ paddingTop: 14 }}>
+          <div className="flex items-center h-full px-4 pr-20" style={{ paddingTop: 10 }}>
+            {/* Thin accent */}
             <div
-              className="shrink-0 mr-3 rounded-sm"
-              style={{ width: 3, height: 32, background: q.color }}
+              className="shrink-0 mr-3 rounded-full"
+              style={{ width: 2, height: 24, background: q.color, opacity: 0.55 }}
             />
             <div className="min-w-0 flex-1">
-              <p className="text-[12.5px] leading-[1.4] text-text-secondary truncate">{q.text}</p>
-              <p className="text-[11px] text-text-muted mt-0.5">{q.author}</p>
+              <p
+                className="text-[12px] leading-[1.45] truncate"
+                style={{ color: 'var(--color-text-muted)', opacity: 0.85 }}
+              >
+                {q.text}
+              </p>
+              <p
+                className="text-[10.5px] mt-0.5"
+                style={{ color: 'var(--color-text-muted)', opacity: 0.45 }}
+              >
+                {q.author}
+              </p>
             </div>
           </div>
 
           {/* Dot navigation */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-[5px]">
+          <div className="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col gap-0.75">
             {QUOTES.map((_, i) => (
               <button
                 key={i}
@@ -99,36 +133,47 @@ export default function MotivationalBanner() {
                 onClick={() => goTo(i)}
                 className="rounded-full transition-all duration-200"
                 style={{
-                  width: 5,
-                  height: 5,
-                  background: i === idx ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.14)',
+                  width: 4,
+                  height: 4,
+                  background: i === idx ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.12)',
                 }}
               />
             ))}
           </div>
 
-          {/* Collapse chevron */}
-          <button
-            type="button"
-            title="Collapse"
-            onClick={() => setCollapsed(true)}
-            className="absolute top-1.5 right-2 flex items-center justify-center text-text-muted hover:text-text-secondary transition-colors"
-            style={{ width: 20, height: 20 }}
-          >
-            <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.75} />
-          </button>
+          {/* Action buttons: collapse + close */}
+          <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5">
+            <button
+              type="button"
+              title="Collapse"
+              onClick={() => setBannerState('collapsed')}
+              className="flex items-center justify-center text-text-muted opacity-35 hover:opacity-65 transition-opacity"
+              style={{ width: 22, height: 22 }}
+            >
+              <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              title="Close"
+              onClick={() => setBannerState('closed')}
+              className="flex items-center justify-center text-text-muted opacity-35 hover:opacity-65 transition-opacity"
+              style={{ width: 22, height: 22 }}
+            >
+              <X className="h-3 w-3" strokeWidth={1.75} />
+            </button>
+          </div>
 
           {/* Progress bar */}
           <div
             className="absolute bottom-0 left-0 right-0"
-            style={{ height: 2, background: 'rgba(255,255,255,0.05)' }}
+            style={{ height: 1, background: 'rgba(255,255,255,0.04)' }}
           >
             <div
               key={animKey}
               style={{
                 height: '100%',
                 background: q.color,
-                opacity: 0.55,
+                opacity: 0.4,
                 animation: `bannerProgress ${INTERVAL_MS}ms linear`,
                 animationFillMode: 'forwards',
               }}
