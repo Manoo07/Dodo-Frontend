@@ -1294,6 +1294,11 @@ body,
   100% { background-position:  600px 0; }
 }
 
+@keyframes bannerProgress {
+  from { width: 0% }
+  to   { width: 100% }
+}
+
 .sk {
   display: block;
   border-radius: 6px;

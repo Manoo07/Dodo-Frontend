@@ -15,6 +15,7 @@ import { useUrlSync } from '../../hooks/useUrlSync'
 import ToastContainer from '../ui/ToastContainer'
 import EisenhowerMatrix from './EisenhowerMatrix'
 import StatusTaskView from './StatusTaskView'
+import MotivationalBanner from './MotivationalBanner'
 
 export default function AppLayout() {
   const { mobilePane, selectedView } = useAppStore()
@@ -156,44 +157,51 @@ export default function AppLayout() {
         </>
       ) : (
         <>
-          {/* Resizer: sidebar ↔ task list (desktop only) */}
+          {/* Resizer: sidebar ↔ main content (desktop only) */}
           <PanelResizer
             className="hidden lg:block"
             label="Resize sidebar"
             onDrag={handleSidebarResize}
           />
 
-          {/* Task list — resizable on desktop */}
-          <div
-            style={isDesktop ? { width: taskListWidth } : undefined}
-            className={cn(
-              'flex flex-col min-w-0 h-full',
-              'w-full lg:w-auto lg:shrink-0',
-              mobilePane === 'list' ? 'flex' : 'hidden lg:flex',
-            )}
-          >
-            {statusView
-              ? <StatusTaskView kind={statusView} />
-              : <TaskList />
-            }
-          </div>
+          {/* Main column: motivational banner + panels */}
+          <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+            <MotivationalBanner />
 
-          {/* Resizer: task list ↔ detail (desktop only) */}
-          <PanelResizer
-            className="hidden lg:block"
-            label="Resize task list"
-            onDrag={handleTaskListResize}
-          />
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              {/* Task list — resizable on desktop */}
+              <div
+                style={isDesktop ? { width: taskListWidth } : undefined}
+                className={cn(
+                  'flex flex-col min-w-0 h-full',
+                  'w-full lg:w-auto lg:shrink-0',
+                  mobilePane === 'list' ? 'flex' : 'hidden lg:flex',
+                )}
+              >
+                {statusView
+                  ? <StatusTaskView kind={statusView} />
+                  : <TaskList />
+                }
+              </div>
 
-          {/* Task detail — fills remaining space */}
-          <div
-            className={cn(
-              'flex flex-col min-w-0 h-full flex-1',
-              mobilePane === 'detail' ? 'flex' : 'hidden lg:flex',
-            )}
-            style={{ minWidth: 0 }}
-          >
-            <TaskDetail />
+              {/* Resizer: task list ↔ detail (desktop only) */}
+              <PanelResizer
+                className="hidden lg:block"
+                label="Resize task list"
+                onDrag={handleTaskListResize}
+              />
+
+              {/* Task detail — fills remaining space */}
+              <div
+                className={cn(
+                  'flex flex-col min-w-0 h-full flex-1',
+                  mobilePane === 'detail' ? 'flex' : 'hidden lg:flex',
+                )}
+                style={{ minWidth: 0 }}
+              >
+                <TaskDetail />
+              </div>
+            </div>
           </div>
         </>
       )}
