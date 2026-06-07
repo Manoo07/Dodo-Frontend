@@ -6,6 +6,7 @@ import {
   Plus,
   Sun,
   CalendarRange,
+  AlertTriangle,
   CheckCircle2,
   XCircle,
   Edit2,
@@ -32,6 +33,7 @@ import type { Folder as FolderType, List, NavView } from '../../types'
 const NAV_ITEMS: { view: NavView; label: string; icon: LucideIcon }[] = [
   { view: 'today',     label: 'Today',       icon: Sun },
   { view: 'next7days', label: 'Next 7 Days', icon: CalendarRange },
+  { view: 'overdue',   label: 'Overdue',     icon: AlertTriangle },
 ]
 
 function NavButton({
@@ -419,6 +421,15 @@ export default function Sidebar() {
     return map
   }, [tasks])
 
+  const overdueCount = useMemo(() => {
+    const now = new Date()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    return tasks.filter((t) => {
+      if (t.status !== 'active' || !t.dueDate) return false
+      return new Date(t.dueDate) < startOfToday
+    }).length
+  }, [tasks])
+
   const unfiledLists = lists.filter((l) => !l.folderId)
 
   function handleNavClick(view: NavView) {
@@ -454,6 +465,7 @@ export default function Sidebar() {
               icon={item.icon}
               label={item.label}
               active={isNavActive(item.view)}
+              count={item.view === 'overdue' ? overdueCount : undefined}
               onClick={() => handleNavClick(item.view)}
             />
           ))}

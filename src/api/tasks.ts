@@ -16,6 +16,9 @@ export const tasksApi = {
   getNext7Days: () =>
     client.get<Task[]>('/tasks/next7days').then((r) => r.data),
 
+  getOverdue: () =>
+    client.get<Task[]>('/tasks/overdue').then((r) => r.data),
+
   getCompleted: (listId?: string) =>
     client
       .get<Task[]>('/tasks', { params: { status: 'completed', ...(listId && { listId }) } })

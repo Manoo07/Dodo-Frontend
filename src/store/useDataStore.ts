@@ -42,6 +42,14 @@ function isWithin7Days(d: string | null): boolean {
   return date >= start && date <= end
 }
 
+function isOverdue(d: string | null): boolean {
+  if (!d) return false
+  const date = new Date(d)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return date < startOfToday
+}
+
 function apiErrorMessage(err: unknown): string {
   if (typeof err === 'object' && err !== null && 'response' in err) {
     const res = (err as { response?: { data?: { error?: string } } }).response
@@ -63,8 +71,10 @@ interface DataState {
   tasksPage: number
   tasksHasMore: boolean
   tasksTotal: number
+  viewLoading: Partial<Record<'today' | 'next7days' | 'overdue', boolean>>
   hydrate: () => Promise<void>
   loadMoreTasks: () => Promise<void>
+  refreshView: (view: 'today' | 'next7days' | 'overdue') => Promise<void>
   clearError: () => void
   createList: (p: { name: string; icon?: string; color?: string; folderId?: string | null }) => List
   updateList: (id: string, p: Partial<Pick<List, 'name' | 'icon' | 'color' | 'folderId' | 'order'>>) => void
@@ -128,6 +138,7 @@ export const useDataStore = create<DataState>()((set, get) => ({
   tasksPage: 0,
   tasksHasMore: false,
   tasksTotal: 0,
+  viewLoading: {},
 
   hydrate: async () => {
     if (get().loading) return
@@ -179,6 +190,27 @@ export const useDataStore = create<DataState>()((set, get) => ({
       })
     } catch (err) {
       set({ loading: false, error: apiErrorMessage(err) })
+    }
+  },
+
+  refreshView: async (view) => {
+    set((s) => ({ viewLoading: { ...s.viewLoading, [view]: true } }))
+    try {
+      const fetched =
+        view === 'today'     ? await tasksApi.getToday() :
+        view === 'next7days' ? await tasksApi.getNext7Days() :
+                               await tasksApi.getOverdue()
+      const normalized = fetched.map((t) => normalizeTask(t as unknown as Record<string, unknown>))
+      set((s) => {
+        const existingById = new Map(s.tasks.map((t) => [t.id, t]))
+        for (const n of normalized) existingById.set(n.id, mergeTask(existingById.get(n.id) ?? n, n))
+        return {
+          tasks: Array.from(existingById.values()),
+          viewLoading: { ...s.viewLoading, [view]: false },
+        }
+      })
+    } catch (err) {
+      set((s) => ({ viewLoading: { ...s.viewLoading, [view]: false }, error: apiErrorMessage(err) }))
     }
   },
 
@@ -701,6 +733,15 @@ export const useDataStore = create<DataState>()((set, get) => ({
           const db = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
           if (da !== db) return da - db          // earlier date first
           return (a.order ?? 0) - (b.order ?? 0) // same day → preserve original order
+        })
+        .map(withList)
+    if (view === 'overdue')
+      return tasks
+        .filter((t) => t.status === 'active' && isOverdue(t.dueDate))
+        .sort((a, b) => {
+          const da = a.dueDate ? new Date(a.dueDate).getTime() : Infinity
+          const db = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
+          return da - db  // oldest overdue first
         })
         .map(withList)
     if (view === 'inbox') {

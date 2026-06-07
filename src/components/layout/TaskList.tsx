@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown, Plus } from 'lucide-react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown, Plus, CheckCheck, RefreshCw } from 'lucide-react'
 import TaskListSkeleton from './TaskListSkeleton'
 import {
   DndContext,
@@ -61,6 +61,7 @@ function getViewTitle(view: string, listName?: string, tagName?: string): string
   if (tagName) return `#${tagName}`
   if (view === 'today') return 'Today'
   if (view === 'next7days') return 'Next 7 Days'
+  if (view === 'overdue') return 'Overdue'
   if (view === 'inbox') return 'Inbox'
   if (view === 'completed') return 'Completed'
   if (view === 'trash') return 'Trash'
@@ -121,6 +122,8 @@ export default function TaskList() {
   const tasksHasMore   = useDataStore((s) => s.tasksHasMore)
   const tasksTotal     = useDataStore((s) => s.tasksTotal)
   const hydrated       = useDataStore((s) => s.hydrated)
+  const viewLoading    = useDataStore((s) => s.viewLoading)
+  const refreshView    = useDataStore((s) => s.refreshView)
 
   // ── All useState / useSensors MUST come before any early return ──────────────
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -137,12 +140,27 @@ export default function TaskList() {
     useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } }),
   )
 
+  // Auto-refresh date views once per session on first navigation
+  const autoRefreshedViews = useRef(new Set<string>())
+  useEffect(() => {
+    if (!hydrated) return
+    if (selectedView !== 'today' && selectedView !== 'next7days' && selectedView !== 'overdue') return
+    const view = selectedView as 'today' | 'next7days' | 'overdue'
+    if (autoRefreshedViews.current.has(view)) return
+    autoRefreshedViews.current.add(view)
+    void refreshView(view)
+  }, [hydrated, selectedView, refreshView])
+
   // ── Computed values needed by useMemo / useEffect ─────────────────────────
   const isListView      = !!(selectedView === 'list' && selectedListId && !selectedTagId)
   const isTrashView     = selectedView === 'trash' && !selectedTagId
   const isCompletedView = selectedView === 'completed' && !selectedTagId
+  const isOverdueView   = selectedView === 'overdue' && !selectedTagId
   const isInboxView     = selectedView === 'inbox' && !selectedTagId
   const canAddTasks     = isListView || isInboxView
+  const isDateView      = !selectedTagId && (selectedView === 'today' || selectedView === 'next7days' || selectedView === 'overdue')
+  const currentDateView = isDateView ? selectedView as 'today' | 'next7days' | 'overdue' : null
+  const isViewRefreshing = currentDateView ? (viewLoading[currentDateView] ?? false) : false
 
   // ── useMemo / useEffect MUST be before any early return ───────────────────
   const tasks = useMemo(
@@ -529,6 +547,21 @@ export default function TaskList() {
               Empty Trash
             </button>
           )}
+          {isDateView && currentDateView && (
+            <button
+              type="button"
+              title="Sync"
+              aria-label="Sync this view"
+              disabled={isViewRefreshing}
+              onClick={() => refreshView(currentDateView)}
+              className="icon-btn shrink-0 p-1"
+            >
+              <RefreshCw
+                className={isViewRefreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+                strokeWidth={1.75}
+              />
+            </button>
+          )}
           <IconButton icon={ArrowUpDown} label="Sort" size="sm" />
           <IconButton
             icon={MoreHorizontal}
@@ -602,22 +635,26 @@ export default function TaskList() {
         {flatTasks.length === 0 && !showAddSection ? (
           <div className="flex flex-1 items-center justify-center py-12">
             <EmptyState
-              icon={isTrashView ? Trash2 : isCompletedView ? RotateCcw : ListTodo}
+              icon={isTrashView ? Trash2 : isCompletedView ? RotateCcw : isOverdueView ? CheckCheck : ListTodo}
               title={
                 isTrashView
                   ? 'Trash is empty'
                   : isCompletedView
                     ? 'No completed tasks'
-                    : isListView
-                      ? 'No tasks yet'
-                      : 'Nothing here'
+                    : isOverdueView
+                      ? 'No overdue tasks'
+                      : isListView
+                        ? 'No tasks yet'
+                        : 'Nothing here'
               }
               description={
                 isTrashView
                   ? 'Deleted tasks will appear here.'
-                  : isListView || isInboxView
-                    ? 'Add your first task using the input above.'
-                    : 'No tasks match this view.'
+                  : isOverdueView
+                    ? 'You\'re all caught up — nothing past its due date.'
+                    : isListView || isInboxView
+                      ? 'Add your first task using the input above.'
+                      : 'No tasks match this view.'
               }
             />
           </div>
