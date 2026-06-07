@@ -142,9 +142,9 @@ function StatusTaskRow({ task, kind, depth = 0, selectedTaskId, onSelect, onActi
 
         {/* [Ticket #6] List icon + name */}
         {task.list && (
-          <span className="shrink-0 flex items-center gap-0.75 text-[11px] text-text-muted opacity-40">
+          <span className="shrink-0 flex items-center gap-1 text-[11px] text-text-muted opacity-40 mr-1">
             {task.list.icon && <ListIconSmall iconKey={task.list.icon} />}
-            <span className="truncate max-w-20">{task.list.name}</span>
+            <span>{task.list.name}</span>
           </span>
         )}
 
@@ -188,11 +188,11 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
 
   return (
     // [Ticket #1] Left accent bar spans full group (header + rows)
-    <div className="mt-4 mb-4" style={{ borderLeft: `3px solid ${accentColor}` }}>
+    <div style={{ borderLeft: `3px solid ${accentColor}` }}>
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2.5 text-left px-4 py-3 transition-colors hover:bg-white/4"
+        className="w-full flex items-center gap-2.5 text-left px-4 py-4 transition-colors hover:bg-white/4"
       >
         <ChevronDown
           className="h-3.5 w-3.5 text-text-muted shrink-0 transition-transform duration-150"
@@ -204,7 +204,7 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
       </button>
 
       {isOpen && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', marginTop: 2 }}>
           {tasks.map(task => (
             <StatusTaskRow
               key={task.id}
@@ -347,26 +347,28 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
 
 
       {/* Groups */}
-      <div className="flex-1 overflow-y-auto min-h-0 pt-1 pb-6">
+      <div className="flex-1 overflow-y-auto min-h-0 pb-6">
         {groups.length === 0 ? (
           <div className="flex flex-1 items-center justify-center py-16">
             <p className="text-[13px] text-text-muted opacity-50">{cfg.emptyMessage}</p>
           </div>
         ) : (
-          groups.map((group) => (
-            <DateGroup
-              key={group.label}
-              label={group.label}
-              tasks={group.tasks}
-              isOpen={isOpen(group.label)}
-              onToggle={() => toggleGroup(group.label)}
-              accentColor={cfg.accentColor}
-              selectedTaskId={selectedTaskId}
-              onSelect={(t) => setSelectedTaskId(t.id)}
-              onAction={handleAction}
-              kind={kind}
-            />
-          ))
+          <div className="flex flex-col gap-7 pt-3">
+            {groups.map((group) => (
+              <DateGroup
+                key={group.label}
+                label={group.label}
+                tasks={group.tasks}
+                isOpen={isOpen(group.label)}
+                onToggle={() => toggleGroup(group.label)}
+                accentColor={cfg.accentColor}
+                selectedTaskId={selectedTaskId}
+                onSelect={(t) => setSelectedTaskId(t.id)}
+                onAction={handleAction}
+                kind={kind}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
