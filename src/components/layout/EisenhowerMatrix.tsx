@@ -105,34 +105,36 @@ function MatrixTaskRow({
   onSelect: () => void
   onToggleComplete: (id: string) => void
 }) {
+  const isActive = task.status === 'active'
   return (
     <div
       className={cn(
-        'group flex items-center gap-2 px-3 py-0 cursor-pointer transition-colors overflow-hidden',
-        'hover:bg-white/5',
-        isSelected && 'bg-white/7',
+        'group flex items-center gap-3 px-4 cursor-pointer select-none transition-all overflow-hidden',
+        isSelected
+          ? 'bg-accent/8 border-l-2 border-accent'
+          : 'border-l-2 border-transparent hover:bg-white/5',
       )}
-      style={{ height: 36, minHeight: 36 }}
+      style={{ height: 42, minHeight: 42 }}
       onClick={onSelect}
     >
       <TaskCheckbox
-        checked={task.status === 'completed'}
+        checked={!isActive}
         priority={task.priority}
-        size="sm"
+        size="md"
         onClick={(e) => { e.stopPropagation(); onToggleComplete(task.id) }}
       />
       <span
         className={cn(
-          'flex-1 min-w-0 truncate text-[13px]',
-          task.status !== 'active' ? 'line-through text-text-muted' : 'text-text-primary',
+          'flex-1 min-w-0 truncate text-[13.5px]',
+          isActive ? 'text-text-primary font-medium' : 'line-through text-text-muted font-normal',
         )}
       >
         {task.title}
       </span>
       {task.list && (
-        <span className="shrink-0 min-w-0 text-[10.5px] text-text-muted opacity-60 flex items-center gap-0.5 overflow-hidden">
-          {task.list.icon && <span className="shrink-0">{task.list.icon}</span>}
-          <span className="truncate max-w-18">{task.list.name}</span>
+        <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/6 overflow-hidden max-w-23">
+          {task.list.icon && <span className="text-[10px] shrink-0 leading-none">{task.list.icon}</span>}
+          <span className="truncate text-[10.5px] text-text-muted leading-none">{task.list.name}</span>
         </span>
       )}
     </div>

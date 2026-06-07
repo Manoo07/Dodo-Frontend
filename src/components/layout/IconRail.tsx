@@ -52,20 +52,20 @@ function RailButton({
       aria-label={label}
       onClick={disabled ? undefined : onClick}
       className={cn(
-        'relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+        'relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-150',
         active && 'bg-accent/15 text-accent',
-        !active && !disabled && 'text-text-muted hover:bg-bg-surface hover:text-text-secondary cursor-pointer',
-        disabled && 'text-text-muted opacity-30 cursor-not-allowed',
+        !active && !disabled && 'text-text-muted hover:bg-white/6 hover:text-text-secondary cursor-pointer',
+        disabled && 'text-text-muted opacity-25 cursor-not-allowed',
       )}
     >
       {/* Active indicator — left accent bar */}
       {active && (
         <span
           className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full"
-          style={{ width: 3, height: 18, background: 'var(--color-accent)' }}
+          style={{ width: 3, height: 22, background: 'var(--color-accent)' }}
         />
       )}
-      <Icon className="nav-icon" strokeWidth={active ? 2 : 1.8} />
+      <Icon className="nav-icon" strokeWidth={active ? 2 : 1.6} />
     </button>
   )
 }
@@ -93,7 +93,7 @@ export default function IconRail() {
         T
       </div>
 
-      <div className="flex flex-col items-center gap-0.5 mt-1">
+      <div className="flex flex-col items-center gap-1 mt-1">
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.action === 'matrix' ? selectedView === 'matrix' :
@@ -114,7 +114,7 @@ export default function IconRail() {
 
       <div className="flex-1" />
 
-      <div className="flex flex-col items-center gap-0.5 pb-3">
+      <div className="flex flex-col items-center gap-1 pb-4">
         {BOTTOM_ITEMS.map((item) => (
           <RailButton key={item.label} icon={item.icon} label={item.label} disabled />
         ))}
