@@ -186,16 +186,16 @@ export default function TaskItem({
               {formatDueDate(dueDate)}
             </span>
           ) : isOverdue ? (
-            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11.5px] font-semibold text-priority-p1 bg-priority-p1/12 border border-priority-p1/25">
-              <AlertCircle className="h-3.5 w-3.5" strokeWidth={2.5} />
+            <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11.5px] font-semibold text-priority-p1 bg-priority-p1/12 border border-priority-p1/25">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
               {formatDueDate(dueDate)}
             </span>
           ) : isDueToday ? (
             <span
-              className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11.5px] font-semibold"
+              className="shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11.5px] font-semibold"
               style={{ color: '#f97316', background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.25)' }}
             >
-              <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+              <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
               Today
             </span>
           ) : (
