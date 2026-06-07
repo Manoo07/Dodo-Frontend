@@ -3,8 +3,15 @@ import { ChevronDown, ChevronRight, Printer, Trash2, Menu, RefreshCw } from 'luc
 import { useDataStore } from '../../store/useDataStore'
 import { useAppStore } from '../../store/useAppStore'
 import TaskCheckbox from '../ui/TaskCheckbox'
+import { LIST_ICON_MAP } from '../ui/ListIconPicker'
 import type { Task } from '../../types'
 import { cn } from '../../lib/cn'
+
+function ListIconSmall({ iconKey }: { iconKey: string }) {
+  const Icon = LIST_ICON_MAP[iconKey]
+  if (Icon) return <Icon className="h-3 w-3" strokeWidth={1.75} />
+  return <span className="text-[12px] leading-none">{iconKey}</span>
+}
 
 // ── View configs ──────────────────────────────────────────────────────────────
 
@@ -96,7 +103,7 @@ function FilterDropdown({ value, options, onChange }: {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium text-text-secondary hover:bg-white/6 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium text-text-secondary hover:bg-white/6 transition-colors"
         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
       >
         {current?.label}
@@ -187,7 +194,7 @@ function StatusTaskRow({ task, kind, depth = 0, selectedTaskId, onSelect, onActi
         {/* [Ticket #6] List icon + name */}
         {task.list && (
           <span className="shrink-0 flex items-center gap-0.75 text-[11px] text-text-muted opacity-40">
-            {task.list.icon && <span className="text-[12px] leading-none">{task.list.icon}</span>}
+            {task.list.icon && <ListIconSmall iconKey={task.list.icon} />}
             <span className="truncate max-w-20">{task.list.name}</span>
           </span>
         )}
@@ -232,7 +239,7 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
 
   return (
     // [Ticket #1] Left accent bar spans full group (header + rows)
-    <div className="mb-3" style={{ borderLeft: `3px solid ${accentColor}` }}>
+    <div className="mt-4" style={{ borderLeft: `3px solid ${accentColor}` }}>
       <button
         type="button"
         onClick={onToggle}
@@ -298,7 +305,7 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
     const usedIds = new Set(tasks.filter((t) => t.status === cfg.taskStatus).map((t) => t.listId))
     return [
       { value: 'all', label: 'All Lists' },
-      ...lists.filter((l) => usedIds.has(l.id)).map((l) => ({ value: l.id, label: `${l.icon ?? ''} ${l.name}`.trim() })),
+      ...lists.filter((l) => usedIds.has(l.id)).map((l) => ({ value: l.id, label: l.name })),
     ]
   }, [tasks, lists, cfg.taskStatus])
 
