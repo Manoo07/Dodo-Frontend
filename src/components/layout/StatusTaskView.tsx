@@ -142,9 +142,9 @@ function StatusTaskRow({ task, kind, depth = 0, selectedTaskId, onSelect, onActi
 
         {/* [Ticket #6] List icon + name */}
         {task.list && (
-          <span className="shrink-0 flex items-center gap-1 text-[11px] text-text-muted opacity-40 mr-1">
+          <span className="shrink-0 flex items-center gap-1 text-[11px] text-text-muted opacity-40 mr-1 max-w-25">
             {task.list.icon && <ListIconSmall iconKey={task.list.icon} />}
-            <span>{task.list.name}</span>
+            <span className="truncate">{task.list.name}</span>
           </span>
         )}
 
