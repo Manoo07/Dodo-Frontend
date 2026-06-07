@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronRight, Flag, AlertCircle, Calendar, Clock, ListTree, GripVertical } from 'lucide-react'
+import { ChevronRight, Flag, Calendar, ListTree, GripVertical } from 'lucide-react'
 import type { Task } from '../../types'
 import TaskContextMenu from './TaskContextMenu'
 import { buildTaskMenuItems } from './taskMenuBuilder'
@@ -186,16 +186,14 @@ export default function TaskItem({
               {formatDueDate(dueDate)}
             </span>
           ) : isOverdue ? (
-            <span className="shrink-0 mx-1 inline-flex items-center gap-1 px-1.5 py-px rounded text-[11px] font-medium text-priority-p1 bg-priority-p1/10 border border-priority-p1/20">
-              <AlertCircle className="h-3 w-3 shrink-0" strokeWidth={2.5} />
+            <span className="shrink-0 mx-1 px-2 py-px rounded-full text-[10.5px] font-semibold text-priority-p1 bg-priority-p1/10 border border-priority-p1/25">
               {formatDueDate(dueDate)}
             </span>
           ) : isDueToday ? (
             <span
-              className="shrink-0 mx-1 inline-flex items-center gap-1 px-1.5 py-px rounded text-[11px] font-medium"
-              style={{ color: '#f97316', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)' }}
+              className="shrink-0 mx-1 px-2 py-px rounded-full text-[10.5px] font-semibold"
+              style={{ color: '#f97316', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.25)' }}
             >
-              <Clock className="h-3 w-3 shrink-0" strokeWidth={2} />
               Today
             </span>
           ) : (
