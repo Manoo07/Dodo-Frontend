@@ -266,8 +266,19 @@ function TaskDetailContent({
     const due = new Date(date.getFullYear(), date.getMonth(), date.getDate())
     if (due.getTime() === today.getTime()) return 'Today'
     if (due.getTime() === tomorrow.getTime()) return 'Tomorrow'
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000)
+    if (diffDays > 0) return `${dateStr}, ${diffDays}d left`
+    return dateStr
   }
+
+  const isCompleted = liveTask.status === 'completed'
+  const isWontDo    = liveTask.status === 'wont_do'
+
+  const isDueOverdue =
+    !isCompleted && !isWontDo && liveTask.dueDate
+      ? new Date(liveTask.dueDate).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
+      : false
 
   function commitSubtask() {
     if (!task) return
@@ -279,9 +290,6 @@ function TaskDetailContent({
       setAddingSubtask(false)
     }
   }
-
-  const isCompleted = liveTask.status === 'completed'
-  const isWontDo    = liveTask.status === 'wont_do'
 
   const footerMenuItems = buildTaskMenuItems({
     onAddSubtask: () => setAddingSubtask(true),
@@ -320,6 +328,7 @@ function TaskDetailContent({
             onClick={() => setShowDatePicker((v) => !v)}
             className={cn(
               'detail-due-btn',
+              isDueOverdue ? 'text-priority-p1' :
               liveTask.dueDate ? 'text-accent' : 'text-text-muted hover:text-text-primary',
             )}
           >

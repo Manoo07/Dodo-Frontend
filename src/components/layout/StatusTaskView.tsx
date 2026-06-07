@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, Printer, Trash2, Menu } from 'lucide-react'
+import { ChevronDown, ChevronRight, Printer, Trash2, Menu, RefreshCw } from 'lucide-react'
 import { useDataStore } from '../../store/useDataStore'
 import { useAppStore } from '../../store/useAppStore'
 import TaskCheckbox from '../ui/TaskCheckbox'
@@ -23,7 +23,7 @@ const VIEW_CONFIG: Record<StatusViewKind, {
     title: 'Completed',
     taskStatus: 'completed',
     dateField: 'completedAt',
-    accentColor: 'var(--color-accent)',
+    accentColor: '#22C55E',           // [Ticket #1] green per approved wireframe
     emptyMessage: 'No completed tasks yet',
     showFilters: true,
     actionIcon: 'print',
@@ -76,6 +76,12 @@ function passesDateFilter(dateStr: string | null, filter: string): boolean {
   return true
 }
 
+// ── Recursive count helper (Ticket #5) ───────────────────────────────────────
+
+function countAll(tasks: Task[]): number {
+  return tasks.reduce((sum, t) => sum + 1 + countAll(t.children ?? []), 0)
+}
+
 // ── Dropdown ──────────────────────────────────────────────────────────────────
 
 function FilterDropdown({ value, options, onChange }: {
@@ -120,45 +126,91 @@ function FilterDropdown({ value, options, onChange }: {
   )
 }
 
-// ── Task row ──────────────────────────────────────────────────────────────────
+// ── Task row — recursive with expand/collapse (Tickets #2 #3 #4 #6 #9) ────────
 
-function StatusTaskRow({ task, isSelected, onSelect, onAction, kind, depth = 0 }: {
+function StatusTaskRow({ task, kind, depth = 0, selectedTaskId, onSelect, onAction }: {
   task: Task
-  isSelected: boolean
-  onSelect: () => void
-  onAction: (id: string) => void
   kind: StatusViewKind
   depth?: number
+  selectedTaskId: string | null
+  onSelect: (task: Task) => void
+  onAction: (id: string) => void
 }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasChildren = !!(task.children && task.children.length > 0)
+  const isSelected  = task.id === selectedTaskId
+
   return (
-    <div
-      className={cn(
-        'flex items-center gap-2.5 cursor-pointer transition-colors pr-4',
-        'hover:bg-white/3',
-        isSelected && 'bg-white/5',
-      )}
-      style={{ height: 40, paddingLeft: `${32 + depth * 20}px` }}
-      onClick={onSelect}
-    >
-      <TaskCheckbox
-        checked={kind !== 'trash'}
-        priority={task.priority}
-        size="sm"
-        onClick={(e) => { e.stopPropagation(); onAction(task.id) }}
-      />
-      <span className={cn(
-        'flex-1 min-w-0 truncate text-[13px]',
-        kind !== 'trash' ? 'line-through opacity-50 text-text-secondary' : 'text-text-primary',
-      )}>
-        {task.title}
-      </span>
-      {task.list && (
-        <span className="shrink-0 flex items-center gap-1 text-[11px] text-text-muted opacity-45">
-          {task.list.icon && <span className="text-[12px]">{task.list.icon}</span>}
-          <span className="truncate max-w-24">{task.list.name}</span>
+    <>
+      <div
+        className={cn(
+          'flex items-center gap-2 cursor-pointer transition-colors pr-4',
+          'hover:bg-white/3',
+          isSelected && 'bg-white/5',
+        )}
+        style={{ height: 40, paddingLeft: `${16 + depth * 24}px` }}
+        onClick={() => onSelect(task)}
+      >
+        {/* [Ticket #4] Expand/collapse chevron for parent tasks */}
+        <button
+          type="button"
+          className={cn(
+            'shrink-0 flex items-center justify-center text-text-muted transition-all hover:text-text-secondary',
+            !hasChildren && 'opacity-0 pointer-events-none',
+          )}
+          style={{ width: 18, height: 18 }}
+          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v) }}
+        >
+          <ChevronRight
+            className={cn('h-3.5 w-3.5 transition-transform duration-150', expanded && 'rotate-90')}
+            strokeWidth={1.75}
+          />
+        </button>
+
+        <TaskCheckbox
+          checked={kind !== 'trash'}
+          priority={task.priority}
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); onAction(task.id) }}
+        />
+
+        {/* [Ticket #2] No strikethrough for completed — checkbox conveys done state */}
+        <span className={cn(
+          'flex-1 min-w-0 truncate text-[13px]',
+          kind === 'wontdo' ? 'line-through opacity-45 text-text-secondary' :
+          kind === 'trash'  ? 'text-text-primary' :
+          'text-text-secondary opacity-80',
+        )}>
+          {task.title}
         </span>
-      )}
-    </div>
+
+        {/* [Ticket #6] List icon + name */}
+        {task.list && (
+          <span className="shrink-0 flex items-center gap-0.75 text-[11px] text-text-muted opacity-40">
+            {task.list.icon && <span className="text-[12px] leading-none">{task.list.icon}</span>}
+            <span className="truncate max-w-20">{task.list.name}</span>
+          </span>
+        )}
+
+        {/* [Ticket #9] Recurrence icon — shown when task.recurrence is set */}
+        {task.recurrence && (
+          <RefreshCw className="h-3 w-3 shrink-0 text-text-muted opacity-35" strokeWidth={1.75} />
+        )}
+      </div>
+
+      {/* [Ticket #3] Children rendered with incremented depth */}
+      {expanded && hasChildren && task.children!.map(child => (
+        <StatusTaskRow
+          key={child.id}
+          task={child}
+          kind={kind}
+          depth={depth + 1}
+          selectedTaskId={selectedTaskId}
+          onSelect={onSelect}
+          onAction={onAction}
+        />
+      ))}
+    </>
   )
 }
 
@@ -175,12 +227,12 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
   onAction: (id: string) => void
   kind: StatusViewKind
 }) {
+  // [Ticket #5] Recursive count includes all descendants
+  const total = countAll(tasks)
+
   return (
-    <div
-      className="mb-3 mx-2 rounded-lg overflow-hidden"
-      style={{ border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${accentColor}` }}
-    >
-      {/* Header */}
+    // [Ticket #1] Left accent bar spans full group (header + rows)
+    <div className="mb-3" style={{ borderLeft: `3px solid ${accentColor}` }}>
       <button
         type="button"
         onClick={onToggle}
@@ -192,24 +244,19 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
           strokeWidth={1.75}
         />
         <span className="flex-1 text-[13px] font-semibold text-text-primary">{label}</span>
-        <span
-          className="text-[10.5px] font-semibold tabular-nums px-1.5 py-px rounded-full"
-          style={{ color: accentColor, background: accentColor + '20' }}
-        >
-          {tasks.length}
-        </span>
+        <span className="text-[12px] font-medium text-text-muted tabular-nums opacity-60">{total}</span>
       </button>
 
-      {/* Separator + Task rows */}
       {isOpen && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          {tasks.map((task) => (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          {tasks.map(task => (
             <StatusTaskRow
               key={task.id}
               task={task}
               kind={kind}
-              isSelected={selectedTaskId === task.id}
-              onSelect={() => onSelect(task)}
+              depth={0}
+              selectedTaskId={selectedTaskId}
+              onSelect={onSelect}
               onAction={onAction}
             />
           ))}
@@ -238,11 +285,10 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
   const emptyTrash     = useDataStore((s) => s.emptyTrash)
   const { selectedTaskId, setSelectedTaskId } = useAppStore()
 
-  // Default to 'week' for filtered views so the list isn't overwhelming on first load.
-  // Trash shows everything (no date filter).
-  const [dateFilter, setDateFilter] = useState(cfg.showFilters ? 'week' : 'all')
+  // [Ticket #7] Default is "All Dates" not "This Week"
+  const [dateFilter, setDateFilter] = useState('all')
   const [listFilter, setListFilter] = useState('all')
-  const [showAll, setShowAll] = useState(false)
+  const [showAll,    setShowAll]    = useState(false)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
   const [initGroup,  setInitGroup]  = useState<string | null>(null)
 
@@ -256,11 +302,11 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
     ]
   }, [tasks, lists, cfg.taskStatus])
 
-  // All matching tasks (no date/list filter) — used to compute the hidden count
   const allMatchingCount = useMemo(() =>
     tasks.filter((t) => t.status === cfg.taskStatus).length,
   [tasks, cfg.taskStatus])
 
+  // Flat filtered list (used for hiddenCount)
   const filtered = useMemo(() => {
     const dateField = cfg.dateField
     return tasks
@@ -272,16 +318,40 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
       .map((t) => ({ ...t, list: lists.find((l) => l.id === t.listId) })) as Task[]
   }, [tasks, lists, cfg, effectiveDateFilter, listFilter])
 
+  // [Ticket #5] Build parent-child tree from flat filtered list
+  const rootTasks = useMemo(() => {
+    const ids = new Set(filtered.map(t => t.id))
+    const childrenByParent = new Map<string, Task[]>()
+    for (const t of filtered) childrenByParent.set(t.id, [])
+
+    const roots: Task[] = []
+    for (const t of filtered) {
+      if (t.parentId && ids.has(t.parentId)) {
+        childrenByParent.get(t.parentId)!.push(t)
+      } else {
+        roots.push(t)
+      }
+    }
+
+    function buildNode(task: Task): Task {
+      return { ...task, children: (childrenByParent.get(task.id) ?? []).map(buildNode) }
+    }
+
+    return roots.map(buildNode)
+  }, [filtered])
+
   const groups = useMemo(() => {
     const dateField = cfg.dateField
     const map = new Map<string, { tasks: Task[]; sortMs: number }>()
-    for (const t of filtered) {
+    for (const t of rootTasks) {
       const label = getGroupLabel(t[dateField])
       if (!map.has(label)) map.set(label, { tasks: [], sortMs: -(new Date(t[dateField] ?? 0).getTime()) })
       map.get(label)!.tasks.push(t)
     }
-    return [...map.entries()].sort((a, b) => a[1].sortMs - b[1].sortMs).map(([label, { tasks }]) => ({ label, tasks }))
-  }, [filtered, cfg.dateField])
+    return [...map.entries()]
+      .sort((a, b) => a[1].sortMs - b[1].sortMs)
+      .map(([label, { tasks }]) => ({ label, tasks }))
+  }, [rootTasks, cfg.dateField])
 
   const hiddenCount = allMatchingCount - filtered.length
 
@@ -298,7 +368,6 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
       const s = new Set<string>()
       if (first && first !== label) s.add(first)
       if (label !== first) s.add(label)
-      else {/* first was open, now closing it — leave empty */}
       setOpenGroups(s)
     } else {
       setOpenGroups((prev) => {
@@ -312,19 +381,21 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
 
   function handleAction(id: string) {
     if (kind === 'completed') toggleComplete(id)
-    else if (kind === 'wontdo') toggleComplete(id) // re-activates the task
+    else if (kind === 'wontdo') toggleComplete(id)
     else if (kind === 'trash') restoreTask(id)
   }
 
   return (
     <div className="flex flex-col h-full w-full bg-bg-primary overflow-hidden">
-      {/* Header */}
+
+      {/* [Ticket #8] Header: [≡] Title [action] */}
       <div className="panel-header flex items-center justify-between gap-2 px-5">
         <div className="flex items-center gap-2.5 min-w-0">
+          {/* Hamburger always visible (not just mobile) */}
           <button
             type="button"
             onClick={() => useAppStore.getState().setMobilePane('sidebar')}
-            className="icon-btn lg:hidden shrink-0"
+            className="icon-btn shrink-0"
             aria-label="Open navigation"
           >
             <Menu className="h-4 w-4" strokeWidth={1.75} />
@@ -350,9 +421,9 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* [Ticket #10] Both filter chips use the same FilterDropdown — identical styling */}
       {cfg.showFilters && (
-        <div className="flex items-center gap-2 px-4 pb-3 pt-1 shrink-0">
+        <div className="flex items-center gap-2 px-4 pb-3 pt-2 shrink-0">
           <FilterDropdown value={dateFilter} options={DATE_FILTER_OPTIONS} onChange={setDateFilter} />
           <FilterDropdown value={listFilter} options={listOptions} onChange={setListFilter} />
         </div>
@@ -381,7 +452,6 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
               />
             ))}
 
-            {/* Load more — shown when older tasks are hidden */}
             {hiddenCount > 0 && !showAll && (
               <div className="flex items-center justify-between px-5 py-3 mt-1">
                 <span className="text-[12px] text-text-muted opacity-60">
