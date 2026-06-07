@@ -22,14 +22,12 @@ function readState(): BannerState {
 export default function MotivationalBanner() {
   const [bannerState, setBannerState] = useState<BannerState>(readState)
   const [idx, setIdx] = useState(0)
-  const [animKey, setAnimKey] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current)
     timerRef.current = setInterval(() => {
       setIdx(i => (i + 1) % QUOTES.length)
-      setAnimKey(k => k + 1)
     }, INTERVAL_MS)
   }, [])
 
@@ -48,7 +46,6 @@ export default function MotivationalBanner() {
 
   function goTo(n: number) {
     setIdx(n)
-    setAnimKey(k => k + 1)
     startTimer()
   }
 
@@ -163,22 +160,6 @@ export default function MotivationalBanner() {
             </button>
           </div>
 
-          {/* Progress bar */}
-          <div
-            className="absolute bottom-0 left-0 right-0"
-            style={{ height: 1, background: 'rgba(255,255,255,0.04)' }}
-          >
-            <div
-              key={animKey}
-              style={{
-                height: '100%',
-                background: q.color,
-                opacity: 0.4,
-                animation: `bannerProgress ${INTERVAL_MS}ms linear`,
-                animationFillMode: 'forwards',
-              }}
-            />
-          </div>
         </>
       )}
     </div>

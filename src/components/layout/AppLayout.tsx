@@ -15,7 +15,7 @@ import { useUrlSync } from '../../hooks/useUrlSync'
 import ToastContainer from '../ui/ToastContainer'
 import EisenhowerMatrix from './EisenhowerMatrix'
 import StatusTaskView from './StatusTaskView'
-import MotivationalBanner from './MotivationalBanner'
+// import MotivationalBanner from './MotivationalBanner'
 
 export default function AppLayout() {
   const { mobilePane, selectedView } = useAppStore()
@@ -166,7 +166,7 @@ export default function AppLayout() {
 
           {/* Main column: motivational banner + panels */}
           <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
-            <MotivationalBanner />
+            {/* <MotivationalBanner /> */}
 
             <div className="flex flex-1 min-h-0 overflow-hidden">
               {/* Task list — resizable on desktop */}
