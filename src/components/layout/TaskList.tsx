@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown, Plus, CheckCheck, RefreshCw } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Menu, ListTodo, Trash2, RotateCcw, GripVertical, CheckCircle2, ChevronDown, Plus, CheckCheck, RefreshCw, ChevronsUp } from 'lucide-react'
 import TaskListSkeleton from './TaskListSkeleton'
 import {
   DndContext,
@@ -221,6 +221,11 @@ export default function TaskList() {
   const inboxList = lists.find((l) => l.name.toLowerCase() === 'inbox')
   const listInfo  = selectedListId ? getListById(selectedListId) : undefined
   const tagInfo   = tags.find((t) => t.id === selectedTagId)
+
+  function handleCollapseAll() {
+    setExpandedIds(new Set())
+    setExpandedSections(new Set())
+  }
 
   function handleToggleExpand(id: string) {
     setExpandedIds((prev) => {
@@ -561,6 +566,14 @@ export default function TaskList() {
                 strokeWidth={1.75}
               />
             </button>
+          )}
+          {(expandedIds.size > 0 || expandedSections.size > 0) && (
+            <IconButton
+              icon={ChevronsUp}
+              label="Collapse all"
+              size="sm"
+              onClick={handleCollapseAll}
+            />
           )}
           <IconButton icon={ArrowUpDown} label="Sort" size="sm" />
           <IconButton
