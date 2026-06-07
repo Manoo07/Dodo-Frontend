@@ -126,11 +126,34 @@ export default function AppLayout() {
         />
       )}
 
-      {/* Matrix view — full content area, no sidebar/task-list panels */}
+      {/* Matrix view — full-width grid + task detail panel on the right */}
       {isMatrixView ? (
-        <div className="flex flex-1 min-w-0 h-full overflow-hidden">
-          <EisenhowerMatrix />
-        </div>
+        <>
+          <div
+            className={cn(
+              'flex flex-col min-w-0 h-full flex-1 overflow-hidden',
+              mobilePane === 'detail' ? 'hidden lg:flex' : 'flex',
+            )}
+          >
+            <EisenhowerMatrix />
+          </div>
+
+          <PanelResizer
+            className="hidden lg:block"
+            label="Resize task detail"
+            onDrag={handleTaskListResize}
+          />
+
+          <div
+            className={cn(
+              'flex flex-col min-w-0 h-full',
+              mobilePane === 'detail' ? 'flex' : 'hidden lg:flex',
+            )}
+            style={isDesktop ? { width: taskListWidth, minWidth: 0 } : { flex: 1, minWidth: 0 }}
+          >
+            <TaskDetail />
+          </div>
+        </>
       ) : (
         <>
           {/* Resizer: sidebar ↔ task list (desktop only) */}

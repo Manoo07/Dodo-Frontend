@@ -74,7 +74,7 @@ function DateGroupHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="w-full flex items-center gap-1.5 py-1.5 px-3 text-left group hover:bg-white/4 transition-colors"
+      className="w-full flex items-center gap-2 py-2 px-4 text-left hover:bg-white/4 transition-colors"
     >
       <ChevronDown
         className="h-3.5 w-3.5 text-text-muted shrink-0 transition-transform duration-150"
@@ -82,10 +82,12 @@ function DateGroupHeader({
         strokeWidth={1.75}
       />
       {isCompleted && (
-        <CheckCircle2 className="h-3 w-3 text-text-muted shrink-0" strokeWidth={1.75} />
+        <CheckCircle2 className="h-3.5 w-3.5 text-text-muted shrink-0" strokeWidth={1.75} />
       )}
-      <span className="text-[11.5px] font-semibold text-text-muted">{label}</span>
-      <span className="text-[11px] text-text-muted opacity-60 ml-0.5">{count}</span>
+      <span className="text-[12px] font-semibold text-text-secondary tracking-wide">{label}</span>
+      <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-white/8 text-[11px] font-medium tabular-nums text-text-muted">
+        {count}
+      </span>
     </button>
   )
 }
@@ -106,7 +108,7 @@ function MatrixTaskRow({
   return (
     <div
       className={cn(
-        'group flex items-center gap-2 px-3 py-0 cursor-pointer transition-colors',
+        'group flex items-center gap-2 px-3 py-0 cursor-pointer transition-colors overflow-hidden',
         'hover:bg-white/5',
         isSelected && 'bg-white/7',
       )}
@@ -128,9 +130,9 @@ function MatrixTaskRow({
         {task.title}
       </span>
       {task.list && (
-        <span className="shrink-0 text-[10.5px] text-text-muted opacity-60 flex items-center gap-0.5">
-          {task.list.icon && <span>{task.list.icon}</span>}
-          <span className="truncate max-w-[80px]">{task.list.name}</span>
+        <span className="shrink-0 min-w-0 text-[10.5px] text-text-muted opacity-60 flex items-center gap-0.5 overflow-hidden">
+          {task.list.icon && <span className="shrink-0">{task.list.icon}</span>}
+          <span className="truncate max-w-18">{task.list.name}</span>
         </span>
       )}
     </div>
