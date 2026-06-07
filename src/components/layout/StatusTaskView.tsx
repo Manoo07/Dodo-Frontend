@@ -74,14 +74,6 @@ function getGroupLabel(dateStr: string | null): string {
   return `${day}, ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
 }
 
-function passesDateFilter(dateStr: string | null, filter: string): boolean {
-  if (filter === 'all' || !dateStr) return true
-  const d = new Date(dateStr); const now = new Date()
-  if (filter === 'today') return d.toDateString() === now.toDateString()
-  if (filter === 'week')  { const w = new Date(now); w.setDate(w.getDate() - 7); return d >= w }
-  if (filter === 'month') { const m = new Date(now); m.setMonth(m.getMonth() - 1); return d >= m }
-  return true
-}
 
 // ── Recursive count helper (Ticket #5) ───────────────────────────────────────
 
@@ -89,49 +81,6 @@ function countAll(tasks: Task[]): number {
   return tasks.reduce((sum, t) => sum + 1 + countAll(t.children ?? []), 0)
 }
 
-// ── Dropdown ──────────────────────────────────────────────────────────────────
-
-function FilterDropdown({ value, options, onChange }: {
-  value: string
-  options: { value: string; label: string }[]
-  onChange: (v: string) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const current = options.find((o) => o.value === value)
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium text-text-secondary hover:bg-white/6 transition-colors"
-        style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-      >
-        {current?.label}
-        <ChevronDown className="h-3 w-3 text-text-muted" strokeWidth={2} />
-      </button>
-      {open && (
-        <>
-          <button type="button" className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div
-            className="absolute left-0 top-full mt-1.5 z-50 py-1.5 rounded-xl overflow-hidden"
-            style={{ minWidth: 150, background: '#26262b', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
-          >
-            {options.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => { onChange(o.value); setOpen(false) }}
-                className={cn('w-full text-left px-3.5 py-2 text-[12.5px] font-medium transition-colors hover:bg-white/6', o.value === value ? 'text-accent' : 'text-text-primary')}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
 
 // ── Task row — recursive with expand/collapse (Tickets #2 #3 #4 #6 #9) ────────
 
@@ -239,11 +188,11 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
 
   return (
     // [Ticket #1] Left accent bar spans full group (header + rows)
-    <div className="mt-4" style={{ borderLeft: `3px solid ${accentColor}` }}>
+    <div className="mt-4 mb-2" style={{ borderLeft: `3px solid ${accentColor}` }}>
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 transition-colors hover:bg-white/4"
+        className="w-full flex items-center gap-2.5 text-left px-4 py-3 transition-colors hover:bg-white/4"
       >
         <ChevronDown
           className="h-3.5 w-3.5 text-text-muted shrink-0 transition-transform duration-150"
@@ -275,12 +224,6 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-const DATE_FILTER_OPTIONS = [
-  { value: 'all',   label: 'All Dates'  },
-  { value: 'today', label: 'Today'      },
-  { value: 'week',  label: 'This Week'  },
-  { value: 'month', label: 'This Month' },
-]
 
 export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
   const cfg = VIEW_CONFIG[kind]
@@ -292,38 +235,14 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
   const emptyTrash     = useDataStore((s) => s.emptyTrash)
   const { selectedTaskId, setSelectedTaskId } = useAppStore()
 
-  // [Ticket #7] Default is "All Dates" not "This Week"
-  const [dateFilter, setDateFilter] = useState('all')
-  const [listFilter, setListFilter] = useState('all')
-  const [showAll,    setShowAll]    = useState(false)
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set())
   const [initGroup,  setInitGroup]  = useState<string | null>(null)
 
-  const effectiveDateFilter = showAll ? 'all' : dateFilter
-
-  const listOptions = useMemo(() => {
-    const usedIds = new Set(tasks.filter((t) => t.status === cfg.taskStatus).map((t) => t.listId))
-    return [
-      { value: 'all', label: 'All Lists' },
-      ...lists.filter((l) => usedIds.has(l.id)).map((l) => ({ value: l.id, label: l.name })),
-    ]
-  }, [tasks, lists, cfg.taskStatus])
-
-  const allMatchingCount = useMemo(() =>
-    tasks.filter((t) => t.status === cfg.taskStatus).length,
-  [tasks, cfg.taskStatus])
-
-  // Flat filtered list (used for hiddenCount)
-  const filtered = useMemo(() => {
-    const dateField = cfg.dateField
-    return tasks
-      .filter((t) =>
-        t.status === cfg.taskStatus &&
-        passesDateFilter(t[dateField], effectiveDateFilter) &&
-        (listFilter === 'all' || t.listId === listFilter),
-      )
-      .map((t) => ({ ...t, list: lists.find((l) => l.id === t.listId) })) as Task[]
-  }, [tasks, lists, cfg, effectiveDateFilter, listFilter])
+  const filtered = useMemo(() =>
+    tasks
+      .filter((t) => t.status === cfg.taskStatus)
+      .map((t) => ({ ...t, list: lists.find((l) => l.id === t.listId) })) as Task[],
+  [tasks, lists, cfg.taskStatus])
 
   // [Ticket #5] Build parent-child tree from flat filtered list
   const rootTasks = useMemo(() => {
@@ -359,8 +278,6 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
       .sort((a, b) => a[1].sortMs - b[1].sortMs)
       .map(([label, { tasks }]) => ({ label, tasks }))
   }, [rootTasks, cfg.dateField])
-
-  const hiddenCount = allMatchingCount - filtered.length
 
   function isOpen(label: string): boolean {
     const first = groups[0]?.label
@@ -428,52 +345,28 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
         </div>
       </div>
 
-      {/* [Ticket #10] Both filter chips use the same FilterDropdown — identical styling */}
-      {cfg.showFilters && (
-        <div className="flex items-center gap-2 px-4 pb-3 pt-2 shrink-0">
-          <FilterDropdown value={dateFilter} options={DATE_FILTER_OPTIONS} onChange={setDateFilter} />
-          <FilterDropdown value={listFilter} options={listOptions} onChange={setListFilter} />
-        </div>
-      )}
 
       {/* Groups */}
       <div className="flex-1 overflow-y-auto min-h-0 pt-1 pb-6">
-        {groups.length === 0 && hiddenCount === 0 ? (
+        {groups.length === 0 ? (
           <div className="flex flex-1 items-center justify-center py-16">
             <p className="text-[13px] text-text-muted opacity-50">{cfg.emptyMessage}</p>
           </div>
         ) : (
-          <>
-            {groups.map((group) => (
-              <DateGroup
-                key={group.label}
-                label={group.label}
-                tasks={group.tasks}
-                isOpen={isOpen(group.label)}
-                onToggle={() => toggleGroup(group.label)}
-                accentColor={cfg.accentColor}
-                selectedTaskId={selectedTaskId}
-                onSelect={(t) => setSelectedTaskId(t.id)}
-                onAction={handleAction}
-                kind={kind}
-              />
-            ))}
-
-            {hiddenCount > 0 && !showAll && (
-              <div className="flex items-center justify-between px-5 py-3 mt-1">
-                <span className="text-[12px] text-text-muted opacity-60">
-                  {hiddenCount} older {hiddenCount === 1 ? 'task' : 'tasks'} not shown
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowAll(true)}
-                  className="text-[12px] font-semibold text-accent hover:text-accent-hover transition-colors"
-                >
-                  Load more →
-                </button>
-              </div>
-            )}
-          </>
+          groups.map((group) => (
+            <DateGroup
+              key={group.label}
+              label={group.label}
+              tasks={group.tasks}
+              isOpen={isOpen(group.label)}
+              onToggle={() => toggleGroup(group.label)}
+              accentColor={cfg.accentColor}
+              selectedTaskId={selectedTaskId}
+              onSelect={(t) => setSelectedTaskId(t.id)}
+              onAction={handleAction}
+              kind={kind}
+            />
+          ))
         )}
       </div>
     </div>
