@@ -186,14 +186,11 @@ export default function TaskItem({
               {formatDueDate(dueDate)}
             </span>
           ) : isOverdue ? (
-            <span className="shrink-0 mx-1 px-2 py-px rounded-full text-[10.5px] font-semibold text-priority-p1 bg-priority-p1/10 border border-priority-p1/25">
+            <span className="shrink-0 mx-1 text-[11px] font-medium text-priority-p1">
               {formatDueDate(dueDate)}
             </span>
           ) : isDueToday ? (
-            <span
-              className="shrink-0 mx-1 px-2 py-px rounded-full text-[10.5px] font-semibold"
-              style={{ color: '#f97316', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.25)' }}
-            >
+            <span className="shrink-0 mx-1 text-[11px] font-medium" style={{ color: '#f97316' }}>
               Today
             </span>
           ) : (

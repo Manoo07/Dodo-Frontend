@@ -90,25 +90,25 @@ function FilterDropdown({ value, options, onChange }: {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium text-text-secondary hover:bg-bg-hover transition-colors"
-        style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium text-text-secondary hover:bg-white/6 transition-colors"
+        style={{ border: '1px solid rgba(255,255,255,0.1)' }}
       >
         {current?.label}
-        <ChevronDown className="h-3.5 w-3.5 text-text-muted" strokeWidth={2} />
+        <ChevronDown className="h-3 w-3 text-text-muted" strokeWidth={2} />
       </button>
       {open && (
         <>
           <button type="button" className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className="absolute left-0 top-full mt-1 z-50 py-1 rounded-xl overflow-hidden"
-            style={{ minWidth: 140, background: '#26262b', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+            className="absolute left-0 top-full mt-1.5 z-50 py-1.5 rounded-xl overflow-hidden"
+            style={{ minWidth: 150, background: '#26262b', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
           >
             {options.map((o) => (
               <button
                 key={o.value}
                 type="button"
                 onClick={() => { onChange(o.value); setOpen(false) }}
-                className={cn('w-full text-left px-3 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-white/6', o.value === value ? 'text-accent' : 'text-text-primary')}
+                className={cn('w-full text-left px-3.5 py-2 text-[12.5px] font-medium transition-colors hover:bg-white/6', o.value === value ? 'text-accent' : 'text-text-primary')}
               >
                 {o.label}
               </button>
@@ -122,39 +122,40 @@ function FilterDropdown({ value, options, onChange }: {
 
 // ── Task row ──────────────────────────────────────────────────────────────────
 
-function StatusTaskRow({ task, isSelected, onSelect, onAction, kind }: {
+function StatusTaskRow({ task, isSelected, onSelect, onAction, kind, depth = 0 }: {
   task: Task
   isSelected: boolean
   onSelect: () => void
   onAction: (id: string) => void
   kind: StatusViewKind
+  depth?: number
 }) {
   return (
     <div
       className={cn(
-        'flex items-center gap-3 cursor-pointer transition-colors px-5',
-        'hover:bg-white/4',
-        isSelected && 'bg-white/6',
+        'flex items-center gap-2.5 cursor-pointer transition-colors pr-4',
+        'hover:bg-white/3',
+        isSelected && 'bg-white/5',
       )}
-      style={{ minHeight: 48, borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      style={{ height: 40, paddingLeft: `${32 + depth * 20}px` }}
       onClick={onSelect}
     >
       <TaskCheckbox
         checked={kind !== 'trash'}
         priority={task.priority}
-        size="md"
+        size="sm"
         onClick={(e) => { e.stopPropagation(); onAction(task.id) }}
       />
       <span className={cn(
-        'flex-1 min-w-0 truncate text-[14px]',
-        kind !== 'trash' ? 'line-through text-text-muted' : 'text-text-primary',
+        'flex-1 min-w-0 truncate text-[13px]',
+        kind !== 'trash' ? 'line-through opacity-50 text-text-secondary' : 'text-text-primary',
       )}>
         {task.title}
       </span>
       {task.list && (
-        <span className="shrink-0 flex items-center gap-1 text-[12px] text-text-muted opacity-60">
-          {task.list.icon && <span>{task.list.icon}</span>}
-          <span className="truncate max-w-30">{task.list.name}</span>
+        <span className="shrink-0 flex items-center gap-1 text-[11px] text-text-muted opacity-45">
+          {task.list.icon && <span className="text-[12px]">{task.list.icon}</span>}
+          <span className="truncate max-w-24">{task.list.name}</span>
         </span>
       )}
     </div>
@@ -175,25 +176,33 @@ function DateGroup({ label, tasks, isOpen, onToggle, accentColor, selectedTaskId
   kind: StatusViewKind
 }) {
   return (
-    <div className="mb-1">
-      {/* Header — plain white, no accent tint */}
+    <div
+      className="mb-3 mx-2 rounded-lg overflow-hidden"
+      style={{ border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${accentColor}` }}
+    >
+      {/* Header */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-2.5 text-left px-5 py-3 transition-colors hover:bg-white/4"
+        className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 transition-colors hover:bg-white/4"
       >
         <ChevronDown
-          className="h-4 w-4 text-text-muted shrink-0 transition-transform duration-150"
+          className="h-3.5 w-3.5 text-text-muted shrink-0 transition-transform duration-150"
           style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-          strokeWidth={2}
+          strokeWidth={1.75}
         />
-        <span className="flex-1 text-[14px] font-bold text-text-primary">{label}</span>
-        <span className="text-[13px] font-medium text-text-muted tabular-nums">{tasks.length}</span>
+        <span className="flex-1 text-[13px] font-semibold text-text-primary">{label}</span>
+        <span
+          className="text-[10.5px] font-semibold tabular-nums px-1.5 py-px rounded-full"
+          style={{ color: accentColor, background: accentColor + '20' }}
+        >
+          {tasks.length}
+        </span>
       </button>
 
-      {/* Task rows — left border here only */}
+      {/* Separator + Task rows */}
       {isOpen && (
-        <div style={{ borderLeft: `4px solid ${accentColor}` }}>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           {tasks.map((task) => (
             <StatusTaskRow
               key={task.id}
@@ -343,7 +352,7 @@ export default function StatusTaskView({ kind }: { kind: StatusViewKind }) {
 
       {/* Filters */}
       {cfg.showFilters && (
-        <div className="flex items-center gap-3 px-5 py-3 shrink-0">
+        <div className="flex items-center gap-2 px-4 pb-3 pt-1 shrink-0">
           <FilterDropdown value={dateFilter} options={DATE_FILTER_OPTIONS} onChange={setDateFilter} />
           <FilterDropdown value={listFilter} options={listOptions} onChange={setListFilter} />
         </div>
